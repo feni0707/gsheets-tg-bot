@@ -19,7 +19,6 @@ from utils.async_redis import AsyncRedis
 
 path.append("..")
 logger = logging.getLogger(__name__)
-# redis_db = AsyncRedis()
 
 bot = Bot(token=config.BOT_TOKEN)
 
