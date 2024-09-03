@@ -3,7 +3,7 @@ import asyncio
 import logging
 import time
 
-import aioredis
+# import aioredis
 from redis.asyncio.client import Redis
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
@@ -11,7 +11,7 @@ from aiogram.fsm.storage.redis import RedisStorage
 from handlers import user
 from data import config
 
-# from middlewares.admin import AdminMiddleware
+from middlewares.admin import AdminMiddleware
 from middlewares.catch_requests import CatchRequestsMiddleware
 from utils.google_sheets import GoogleTable
 from utils.async_redis import AsyncRedis
@@ -38,7 +38,7 @@ async def main() -> None:
 
     dp = Dispatcher(storage=storage)
 
-    # dp.message.middleware.register(AdminMiddleware())
+    dp.message.middleware.register(AdminMiddleware())
     dp.message.middleware.register(CatchRequestsMiddleware())
     dp.include_router(user.router)
 

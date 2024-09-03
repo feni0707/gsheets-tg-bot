@@ -9,6 +9,7 @@ from datetime import datetime
 import logging
 import asyncio
 from time import time
+from os.path import isfile as is_file_exists
 
 from dotmap import pprint
 
@@ -224,69 +225,72 @@ async def menu(msg: Message, state: FSMContext):
 
 @router.message(User_States.schedule)
 async def schedule(msg: Message, state: FSMContext):
-    if msg.text in consts.TEXT_FOR_KB["schedule"]:
-        if msg.text == "🔙Назад":
-            await msg.answer(msg.text, reply_markup=keyboards.menu)
-            await state.set_state(User_States.menu)
-        else:
-            if not await redis.was_there_activity_today(msg.chat.id, schedule=True):
-                await db.increment_uniq_schedule_req()
-            data = await state.get_data()
-            if data["person_type"] != "teacher":
-                # weekday = datetime.today().weekday()
-                index_now_weekday = datetime.today().weekday() + (
-                    msg.text == consts.TEXT_FOR_KB["schedule"][-1]
-                )
-                # if index_now_weekday == 6:
-                #     await msg.answer("Уроков нету😃")
-                #     return
-                weekdays = consts.SCHOOL_DAYS * 2
-                now_weekday = weekdays[index_now_weekday]
-                # now_weekday = consts.SCHOOL_DAYS[index_now_weekday]
-                if data.get("letter", ""):
-                    school_class = data["school_class"] + (
-                        data["letter"] if len(data["school_class"]) == 1 else ""
-                    )
-                else:
-                    school_class = data["school_class"][:2]
-                try:
-                    key = f"{now_weekday}:{school_class.upper()}"
-                    photo = await redis.get_id_schedule(key)
-                    id_photo_exists = bool(photo)
-                    if not id_photo_exists:
-                        photo = FSInputFile(
-                            f"pillow/images/schedules/{now_weekday}/{school_class.upper()}.jpg"
-                        )
-                    msg_sended_photo = await msg.answer_photo(photo)
-                    if not id_photo_exists and msg_sended_photo.photo:
-                        photo_id = msg_sended_photo.photo[-1].file_id
-                        await redis.add_id_schedule(key, photo_id)
-                except:
-                    logging.error(
-                        f"Нет такого файла info: @{msg.chat.username} {msg.chat.first_name} {school_class}"
-                    )
-                    await msg.answer("Ошибка")
-            else:
-                await msg.answer(msg.text)
-
-        if not await db.user_exists(msg.chat.id):
-            data = await state.get_data()
-            date = msg.date.strftime("%d-%m-%Y")
-            profiles = data.get("profiles", None)
-            await db.add_user(
-                user_id=msg.chat.id,
-                nick_name=msg.chat.username,
-                first_name=msg.chat.first_name,
-                reg_date=date,
-                last_action_date=date,
-                person_type=data.get("person_type", None),
-                school_class=data.get("school_class", "")
-                + data.get("letter", "").upper(),
-                profiles=", ".join(profiles) if profiles else None,
-                recieve_notifications=data.get("recieve_notifications", False),
-            )
-    else:
+    if msg.text not in consts.TEXT_FOR_KB["schedule"]:
         await not_understend(msg)
+        return
+    if msg.text == "🔙Назад":
+        await msg.answer(msg.text, reply_markup=keyboards.menu)
+        await state.set_state(User_States.menu)
+        return
+    if not await redis.was_there_activity_today(msg.chat.id, schedule=True):
+        await db.increment_uniq_schedule_req()
+    data = await state.get_data()
+    if data["person_type"] != "teacher":
+        # weekday = datetime.today().weekday()
+        index_now_weekday = datetime.today().weekday() + (
+            msg.text == consts.TEXT_FOR_KB["schedule"][-1]
+        )
+        if index_now_weekday == 6:
+            await msg.answer("Уроков нету😃")
+            return
+        weekdays = consts.SCHOOL_DAYS * 2
+        now_weekday = weekdays[index_now_weekday]
+        # now_weekday = consts.SCHOOL_DAYS[index_now_weekday]
+        if data.get("letter", ""):
+            school_class = data["school_class"] + (
+                data["letter"] if len(data["school_class"]) == 1 else ""
+            )
+        else:
+            school_class = data["school_class"][:2]
+        try:
+            key = f"{now_weekday}:{school_class.upper()}"
+            path = f"pillow/images/schedules/{now_weekday}/{school_class.upper()}.jpg"
+            if not is_file_exists(path):
+                await msg.answer("Расписание ещё не известно")
+                return
+            photo = await redis.get_id_schedule(key)
+            id_photo_exists = bool(photo)
+            if not id_photo_exists:
+                photo = FSInputFile(
+                    f"pillow/images/schedules/{now_weekday}/{school_class.upper()}.jpg"
+                )
+            msg_sended_photo = await msg.answer_photo(photo)
+            if not id_photo_exists and msg_sended_photo.photo:
+                photo_id = msg_sended_photo.photo[-1].file_id
+                await redis.add_id_schedule(key, photo_id)
+        except:
+            logging.error(
+                f"Нет такого файла info: @{msg.chat.username} {msg.chat.first_name} {school_class}"
+            )
+            await msg.answer("Ошибка")
+    else:
+        await msg.answer(msg.text)
+
+    if not await db.user_exists(msg.chat.id):
+        data = await state.get_data()
+        date = msg.date.strftime("%d-%m-%Y")
+        profiles = data.get("profiles", None)
+        await db.add_user(
+            user_id=msg.chat.id,
+            nick_name=msg.chat.username,
+            first_name=msg.chat.first_name,
+            reg_date=date,
+            last_action_date=date,
+            person_type=data.get("person_type", None),
+            school_class=data.get("school_class", "") + data.get("letter", "").upper(),
+            profiles=", ".join(profiles) if profiles else None,
+            recieve_notifications=data.get("recieve_notifications", False),
+        )
 
 
 @router.message(User_States.settings)

@@ -1,3 +1,4 @@
+from pprint import pprint
 from PIL import Image, ImageDraw, ImageFont
 from re import search
 
@@ -190,7 +191,15 @@ class ImgSchedule:
         self.__img.save(f"pillow/images/schedules/{day}/{school_class}.jpg")
 
     async def schedule_to_pictures(self, school_schedule, merged_cells):
+        # pprint(school_schedule)
         self.__merged_cells = merged_cells
         for school_class, lessons_of_class_per_day in school_schedule.items():
             for day, data in lessons_of_class_per_day.items():
-                await self.__create_img_and_save(school_class, day, data)
+                if isinstance(data, dict):
+                    lists = list(data.values())
+                    lessons = lists[0] + lists[1]
+                else:
+                    lessons = data[:]
+                if any(lessons):
+                    print(school_class, lessons)
+                    await self.__create_img_and_save(school_class, day, data)
