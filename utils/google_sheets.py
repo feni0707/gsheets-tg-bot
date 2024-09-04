@@ -227,5 +227,5 @@ class GoogleTable:
                     text = f"Уведомления разосланы {count_notify_users} пользователям"
                 else:
                     text = "Рассылать уведомления некому"
-                logging.info(text)
+                logging.info(f"{self.school_shift} смена | {text}")
             await sleep(300)

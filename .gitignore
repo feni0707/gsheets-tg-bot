@@ -3,3 +3,6 @@ venv
 pyrightconfig.json
 test.env
 pillow/images/
+pillow/images
+pillow/images/schedules/
+pillow/images/schedules

@@ -1,9 +1,11 @@
 from typing import Callable, Dict, Any, Awaitable
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
+from datetime import datetime
 
 from utils.async_redis import AsyncRedis
 from handlers.user import db
+from utils.utils import delete_last_day_photos
 
 
 class CatchRequestsMiddleware(BaseMiddleware):
@@ -21,7 +23,11 @@ class CatchRequestsMiddleware(BaseMiddleware):
                 await db.update_last_action_date(msg.id)
             person_type = await db.get_person_type(msg.id)
             if not await db.exist_daily_record():
+                index_now_weekday = datetime.today().weekday()
+                if index_now_weekday:
+                    delete_last_day_photos()
                 await db.add_daily_record()
+            delete_last_day_photos()
             await db.increment_daily_statistic(person_type, not any_activ_today)
 
         return await handler(event, data)

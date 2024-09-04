@@ -245,7 +245,6 @@ async def schedule(msg: Message, state: FSMContext):
             return
         weekdays = consts.SCHOOL_DAYS * 2
         now_weekday = weekdays[index_now_weekday]
-        # now_weekday = consts.SCHOOL_DAYS[index_now_weekday]
         if data.get("letter", ""):
             school_class = data["school_class"] + (
                 data["letter"] if len(data["school_class"]) == 1 else ""

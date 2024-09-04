@@ -71,7 +71,10 @@ async def send_notify_to_users(
 import os
 
 
-def delete_files_in_folder(folder_path):
+def delete_last_day_photos():
+    index_now_weekday = datetime.today().weekday()
+    weekday = SCHOOL_DAYS[index_now_weekday - 1]
+    folder_path = f"pillow/images/schedules/{weekday}/"
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
         try:
