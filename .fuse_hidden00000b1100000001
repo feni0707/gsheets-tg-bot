@@ -1,0 +1,5 @@
+2024-09-04 20:26:41,883 - [INFO] -  root - (bot.py).main(35) - Starting bot
+2024-09-04 20:26:42,367 - [INFO] -  aiogram.dispatcher - (dispatcher.py).start_polling(527) - Start polling
+2024-09-04 20:26:42,558 - [INFO] -  aiogram.dispatcher - (dispatcher.py)._polling(341) - Run polling for bot @tha3goPh_bot id=6993280971 - 'Тест расписание'
+2024-09-04 20:26:45,115 - [INFO] -  root - (google_sheets.py).start_polling(206) - start_polling schedule 1 shift
+2024-09-04 20:26:45,423 - [INFO] -  root - (google_sheets.py).start_polling(206) - start_polling schedule 2 shift

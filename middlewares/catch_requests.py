@@ -27,7 +27,6 @@ class CatchRequestsMiddleware(BaseMiddleware):
                 if index_now_weekday:
                     delete_last_day_photos()
                 await db.add_daily_record()
-            delete_last_day_photos()
             await db.increment_daily_statistic(person_type, not any_activ_today)
 
         return await handler(event, data)

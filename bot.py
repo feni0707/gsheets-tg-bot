@@ -2,6 +2,7 @@ from sys import path
 import asyncio
 import logging
 import time
+from datetime import date
 
 # import aioredis
 from redis.asyncio.client import Redis
@@ -28,6 +29,7 @@ async def main() -> None:
         level=logging.INFO,
         # format="%(filename)s:%(lineno)d #%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s",
         format="%(asctime)s - [%(levelname)s] -  %(name)s - (%(filename)s).%(funcName)s(%(lineno)d) - %(message)s",
+        filename=f"logs/{date.today()}.log",
     )
 
     logging.info("Starting bot")

@@ -201,5 +201,4 @@ class ImgSchedule:
                 else:
                     lessons = data[:]
                 if any(lessons):
-                    print(school_class, lessons)
                     await self.__create_img_and_save(school_class, day, data)

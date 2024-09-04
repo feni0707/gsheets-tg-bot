@@ -1,6 +1,7 @@
 from typing import Callable, Dict, Any, Awaitable
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
+import logging
 
 from data.config import ADMIN_ID
 from data.consts import TECHNICAL_WORK
@@ -17,7 +18,7 @@ class AdminMiddleware(BaseMiddleware):
         if msg.id == int(ADMIN_ID):
             return await handler(event, data)
         else:
-            print(
+            logging.info(
                 f"Пользователь {msg.first_name} с username: {msg.username} прислал апдейт с текстом {getattr(event, 'text', '')}"
             )
             bot = event.bot

@@ -5,6 +5,7 @@ from aiogram import Bot
 from datetime import datetime
 from data.consts import SCHOOL_DAYS
 from utils.async_redis import AsyncRedis
+import logging
 
 redis = AsyncRedis()
 
@@ -39,18 +40,18 @@ async def send_notify_to_users(
                         item for lst in current_schedules[time].values() for item in lst
                     ]
                 # current_schedules[time] = list(filter(bool, current_schedules[time]))
-            print(current_schedules)
+            # print(current_schedules)
             if not list(filter(bool, current_schedules["new"])):
-                print(school_class, day, "нету расписания")
+                # print(school_class, day, "нету расписания")
                 continue
             elif not list(filter(bool, current_schedules["last"])):
                 text = "появилось"
-                print(school_class, day, "расписание появилось")
+                # print(school_class, day, "расписание появилось")
             elif current_schedules["last"] != current_schedules["new"]:
                 text = "изменилось"
-                print(school_class, day, "расписание изменилось")
+                # print(school_class, day, "расписание изменилось")
             else:
-                print(school_class, day, "расписание не изменилось")
+                # print(school_class, day, "расписание не изменилось")
                 continue
             day_edited_schedule = (
                 "сегодня" if index_now_day == SCHOOL_DAYS.index(day) else "завтра"
@@ -81,4 +82,4 @@ def delete_last_day_photos():
             if os.path.isfile(file_path):
                 os.remove(file_path)
         except Exception as e:
-            print(f"Ошибка при удалении файла {file_path}. {e}")
+            logging.error(f"Ошибка при удалении файла {file_path}. {e}")

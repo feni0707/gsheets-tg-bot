@@ -219,7 +219,7 @@ class GoogleTable:
                 await img.schedule_to_pictures(
                     self.__school_schedule, self.__merged_cells
                 )
-                print(data_users)
+                logging.info(data_users)
                 count_notify_users = await send_notify_to_users(
                     bot, self._last_schedule, self.__school_schedule, data_users
                 )

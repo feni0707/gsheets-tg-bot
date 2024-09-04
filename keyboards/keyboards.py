@@ -14,7 +14,9 @@ for name_kb in list(TEXT_FOR_KB.keys()):
         builder.add(KeyboardButton(text=text))
     if len(TEXT_FOR_KB[name_kb]) == 3:
         builder.adjust(2)
-    kb_data[name_kb] = builder.as_markup(resize_keyboard=True)
+    kb_data[name_kb] = builder.as_markup(
+        resize_keyboard=True, input_field_placeholder="Воспользуйтесь меню ниже"
+    )
 
 
 async def get_choose_profile_keyboard(
@@ -51,7 +53,9 @@ async def get_settings_kb(notify: bool):
         builder.add(KeyboardButton(text=text))
     builder.adjust(2)
 
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup(
+        resize_keyboard=True, input_field_placeholder="Воспользуйтесь меню ниже"
+    )
 
 
 keyboards = DotMap(kb_data)
