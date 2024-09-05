@@ -174,3 +174,12 @@ class AsyncPostgreSQL:
                     else:
                         ans[key].append(value)
                 return ans
+
+    async def increment_school_claseses(self):
+        async with self.pool.acquire() as conn:
+            conn: Connection
+            async with conn.transaction():
+                res = await conn.fetch(
+                    f"SELECT id, school_class FROM users WHERE school_class SIMILAR TO '[5-8]%|10%'"
+                )
+                print(list(res[0].items()), dir(res[0]))
