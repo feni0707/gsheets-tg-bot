@@ -1,8 +1,7 @@
 from sys import path
 import asyncio
-import logging
-import time
-from datetime import date
+from logging import getLogger, basicConfig, INFO
+from logging.handlers import TimedRotatingFileHandler
 
 # import aioredis
 from redis.asyncio.client import Redis
@@ -15,24 +14,30 @@ from data import config
 from middlewares.admin import AdminMiddleware
 from middlewares.catch_requests import CatchRequestsMiddleware
 from utils.google_sheets import GoogleTable
-from utils.async_redis import AsyncRedis
+
+# from utils.async_redis import AsyncRedis
 
 
 path.append("..")
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 bot = Bot(token=config.BOT_TOKEN)
 
 
 async def main() -> None:
-    logging.basicConfig(
-        level=logging.INFO,
+    basicConfig(
+        level=INFO,
         # format="%(filename)s:%(lineno)d #%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s",
         format="%(asctime)s - [%(levelname)s] -  %(name)s - (%(filename)s).%(funcName)s(%(lineno)d) - %(message)s",
-        filename=f"logs/{date.today()}.log",
+        # filename=f"logs/{date.today()}.log",
     )
+    handler = TimedRotatingFileHandler(
+        "logs/logs", when="midnight", interval=1, backupCount=3
+    )
+    handler.suffix = "%Y-%m-%d_%H-%M-%S"
+    logger.addHandler(handler)
 
-    logging.info("Starting bot")
+    logger.info("Starting bot")
 
     redis = Redis(host="localhost")
 
