@@ -170,7 +170,6 @@ async def yes_no_notify(msg: Message, state: FSMContext):
 @router.message(User_States.menu)
 async def menu(msg: Message, state: FSMContext):
     if msg.text in consts.TEXT_FOR_KB["menu"]:
-        await db.increment_school_claseses()
         if msg.text == "👤Профиль":
             data = await state.get_data()
             text = await get_profile_info(
