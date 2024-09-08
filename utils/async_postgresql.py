@@ -165,11 +165,9 @@ class AsyncPostgreSQL:
                 res = await conn.fetch(request, *CLASSES_BY_SHIFT[shift])
                 ans = {}
                 for record in res:
-                    key = record["school_class"]
+                    key = record["school_class"][:2]
                     value = record["user_id"]
                     if ans.get(key, "list_not_exists") == "list_not_exists":
-                        if len(key) == 3:
-                            key = key[:-1]
                         ans[key] = [value]
                     else:
                         ans[key].append(value)
@@ -182,4 +180,26 @@ class AsyncPostgreSQL:
                 res = await conn.fetch(
                     f"SELECT id, school_class FROM users WHERE school_class SIMILAR TO '[5-8]%|10%'"
                 )
-                print(list(res[0].items()), dir(res[0]))
+                for record in res:
+                    last_sc = record["school_class"]
+                    id = record["id"]
+                    new_sc = f"{int(last_sc[:-1]) + 1}{last_sc[-1]}"
+                    await self.__update_school_class(id, new_sc)
+
+    async def turn_off_notify_9_and_11_classes(self):
+        async with self.pool.acquire() as conn:
+            conn: Connection
+            async with conn.transaction():
+                res = await conn.fetch(
+                    "UPDATE users SET recieve_notifications = false WHERE school_class SIMILAR TO '9%|11%'"
+                )
+                return res
+
+    async def __update_school_class(self, id: int, school_class: str):
+        async with self.pool.acquire() as conn:
+            conn: Connection
+            async with conn.transaction():
+                res = await conn.fetch(
+                    "UPDATE users SET school_class=$2 WHERE id = $1", id, school_class
+                )
+                return res
