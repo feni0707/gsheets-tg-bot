@@ -110,6 +110,9 @@ async def choose_class(msg: Message, state: FSMContext):
                 )
                 await state.set_state(User_States.yes_no_notify)
                 return
+        if match(r"[1-4][а-дА-Д]", text):
+            await msg.answer(consts.BOT_NOT_FOR_JUNS)
+            return
 
     data = await state.get_data()
     await msg.answer(
