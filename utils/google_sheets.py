@@ -190,7 +190,6 @@ class GoogleTable:
 
     async def __is_table_finaly_edited(self):
         if await self.__is_table_update():
-            return True
             n = 3
             while n:
                 await sleep(100)
@@ -219,13 +218,12 @@ class GoogleTable:
                 await img.schedule_to_pictures(
                     self.__school_schedule, self.__merged_cells
                 )
-                logging.info(data_users)
                 count_notify_users = await send_notify_to_users(
                     bot, self._last_schedule, self.__school_schedule, data_users
                 )
                 if count_notify_users:
                     text = f"Уведомления разосланы {count_notify_users} пользователям"
                 else:
-                    text = "Рассылать уведомления некому"
+                    text = "Уведомления рассылать некому"
                 logging.info(f"{self.school_shift} смена | {text}")
             await sleep(300)

@@ -90,7 +90,7 @@ class ImgSchedule:
             now_pos_x = (self.__img_width - self.__text_width) / 2
         self.__now_pos_y, self.__now_pos_x = now_pos_y, now_pos_x
 
-    async def __prepare_not_merged_cell(self, text_for_cell, is_merged):
+    async def __prepare_not_merged_cell(self, text_for_cell, index, is_merged):
         if is_merged:
             self.__merged_cells[self.__day].remove(text_for_cell)
         else:
@@ -98,7 +98,7 @@ class ImgSchedule:
                 self.__draw.rectangle(
                     (
                         self.__img_width / 2 - 4.5,
-                        self.__now_pos_y + 3,
+                        self.__now_pos_y + 4 + index * 1.5,
                         self.__img_width / 2 + 4.5,
                         self.__now_pos_y + 160,
                     ),
@@ -149,7 +149,7 @@ class ImgSchedule:
                     text_for_cell, is_bold, self.__draw, is_merged
                 )
                 await self.__prepare_now_coords(index, is_merged)
-                await self.__prepare_not_merged_cell(text_for_cell, is_merged)
+                await self.__prepare_not_merged_cell(text_for_cell, index, is_merged)
                 self.__draw.text(
                     (
                         self.__now_pos_x,

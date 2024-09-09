@@ -339,4 +339,4 @@ async def not_understend(msg: Message):
     logging.info(
         f"Пользователь @{msg.chat.username} {msg.chat.full_name} написал: {msg.text}"
     )
-    await msg.answer("Я тебя не понял")
+    await msg.answer("Я вас не понял. Чтобы перейти в меню нажмите на /menu")
