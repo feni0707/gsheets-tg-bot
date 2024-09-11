@@ -21,6 +21,9 @@ path.append("..")
 logger = getLogger(__name__)
 
 bot = Bot(token=config.BOT_TOKEN)
+redis = Redis(host="localhost")
+storage = RedisStorage(redis=redis)
+dp = Dispatcher(storage=storage)
 
 
 async def main() -> None:
@@ -33,13 +36,7 @@ async def main() -> None:
 
     info("Starting bot")
 
-    redis = Redis(host="localhost")
-
-    storage = RedisStorage(redis=redis)
-
-    dp = Dispatcher(storage=storage)
-
-    dp.message.middleware.register(AdminMiddleware())
+    # dp.message.middleware.register(AdminMiddleware())
     dp.message.middleware.register(CatchRequestsMiddleware())
     dp.include_router(user.router)
 

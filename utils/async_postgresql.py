@@ -203,3 +203,19 @@ class AsyncPostgreSQL:
                     "UPDATE users SET school_class=$2 WHERE id = $1", id, school_class
                 )
                 return res
+
+    async def get_one_raz_users(self):
+        async with self.pool.acquire() as conn:
+            conn: Connection
+            async with conn.transaction():
+                res = await conn.fetch(
+                    "select user_id from users where school_class similar to '9%'"
+                )
+                return [rec[0] for rec in res]
+
+    async def get_all_users(self):
+        async with self.pool.acquire() as conn:
+            conn: Connection
+            async with conn.transaction():
+                res = await conn.fetch("select user_id from users")
+                return [rec[0] for rec in res]

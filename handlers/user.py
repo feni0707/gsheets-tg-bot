@@ -1,5 +1,6 @@
 from contextlib import suppress
-from aiogram import F, Router, Bot
+from aiogram import F, Dispatcher, Router, Bot
+from aiogram.fsm.storage.base import StorageKey
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove, FSInputFile
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
@@ -27,6 +28,49 @@ db = AsyncPostgreSQL()
 redis = AsyncRedis()
 loop = asyncio.get_event_loop()
 loop.run_until_complete(db.create_pool())
+
+
+@router.message(Command('lets_go'), F.from_user.id == 938764214)
+async def lets_go(msg: Message):
+    await msg.answer('Стартуем!')
+    from bot import bot, dp
+    nine_class_users = await db.get_one_raz_users()
+    all_users = await db.get_all_users()
+    count_all_users = 0
+    count_nine_class_users = 0
+    for user_id in all_users:
+        try:
+            await bot.send_message(user_id, "Бот возобновляет свою работу😃")
+            count_all_users += 1
+        except Exception as e:
+            pass
+        if user_id in nine_class_users:
+            try:
+                await bot.send_message(
+                    user_id,
+                    "Требуется перерегистрация. Выберите кто вы",
+                    reply_markup=keyboards.start_menu,
+                )
+                state_with: FSMContext = FSMContext(
+                    # bot=bot,  # объект бота
+                    storage=dp.storage,  # dp - экземпляр диспатчера
+                    key=StorageKey(
+                        chat_id=user_id,  # если юзер в ЛС, то chat_id=user_id
+                        user_id=user_id,
+                        bot_id=bot.id,
+                    ),
+                )
+                # print(state_with, '\n', dir(state_with))
+                # break
+                await state_with.update_data({})  # обновить дату для пользователя
+                await state_with.set_state(
+                    User_States.start_menu
+                )  # пример прис�оения стейта
+                count_nine_class_users += 1
+            except:
+                pass
+
+    print(f"Разосланно {count_all_users=} {count_nine_class_users=}")
 
 
 @router.message(CommandStart())
