@@ -182,7 +182,7 @@ class GoogleTable:
         key = f"{self.school_shift}_shift_last_schedule"
         last_schedule = await self.__redis.get(key)
         if not in_while:
-            self._last_schedule = loads(last_schedule)
+            self._last_schedule = loads(last_schedule) if last_shedule else None
         if not last_schedule or not (self.__school_schedule == loads(last_schedule)):
             await self.__redis.set(key, dumps(self.__school_schedule))
             return True
