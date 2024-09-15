@@ -5,7 +5,7 @@ from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove, FSInputFi
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramBadRequest
-from re import match
+from re import fullmatch
 from datetime import datetime
 import logging
 import asyncio
@@ -28,49 +28,6 @@ db = AsyncPostgreSQL()
 redis = AsyncRedis()
 loop = asyncio.get_event_loop()
 loop.run_until_complete(db.create_pool())
-
-
-@router.message(Command('lets_go'), F.from_user.id == 938764214)
-async def lets_go(msg: Message):
-    await msg.answer('Стартуем!')
-    from bot import bot, dp
-    nine_class_users = await db.get_one_raz_users()
-    all_users = await db.get_all_users()
-    count_all_users = 0
-    count_nine_class_users = 0
-    for user_id in all_users:
-        try:
-            await bot.send_message(user_id, "Бот возобновляет свою работу😃")
-            count_all_users += 1
-        except Exception as e:
-            pass
-        if user_id in nine_class_users:
-            try:
-                await bot.send_message(
-                    user_id,
-                    "Требуется перерегистрация. Выберите кто вы",
-                    reply_markup=keyboards.start_menu,
-                )
-                state_with: FSMContext = FSMContext(
-                    # bot=bot,  # объект бота
-                    storage=dp.storage,  # dp - экземпляр диспатчера
-                    key=StorageKey(
-                        chat_id=user_id,  # если юзер в ЛС, то chat_id=user_id
-                        user_id=user_id,
-                        bot_id=bot.id,
-                    ),
-                )
-                # print(state_with, '\n', dir(state_with))
-                # break
-                await state_with.update_data({})  # обновить дату для пользователя
-                await state_with.set_state(
-                    User_States.start_menu
-                )  # пример прис�оения стейта
-                count_nine_class_users += 1
-            except:
-                pass
-
-    print(f"Разосланно {count_all_users=} {count_nine_class_users=}")
 
 
 @router.message(CommandStart())
@@ -121,13 +78,6 @@ async def start_menu(msg: Message, state: FSMContext):
             await state.update_data(person_type=person_type)
             await state.set_state(new_state)
             await msg.answer(text=text, reply_markup=keyboard)
-        else:
-            # text = consts.REGISTR_SUCCESSFUL
-            text = "Регистрация для учителей пока, что недоступна"
-            person_type = "teacher"
-            new_state = User_States.menu
-            keyboard = keyboards.menu
-            # await state.update_data(recieve_notifications=False)
             await msg.answer(text)
     else:
         await not_understend(msg)
@@ -138,23 +88,15 @@ async def choose_class(msg: Message, state: FSMContext):
     text = msg.text.replace(" ", "") if isinstance(msg.text, str) else ""
     if text and len(text) in [2, 3]:
         for pattern in [r"[5-9][а-дА-Д]", r"1[0-1][а-бА-Б]"]:
-            if match(pattern, text):
+            if fullmatch(pattern, text):
                 await state.update_data(school_class=text.upper())
-                # if len(text) == 3:
-                #     await msg.answer(
-                #         consts.CHOOSE_PROFILE,
-                #         reply_markup=(await get_choose_profile_keyboard())[0],
-                #     )
-                #     await state.set_state(User_States.choose_profiles)
-                #     await state.update_data(profiles=[])
-                # else:
                 await msg.answer(
                     consts.YES_NO_NOTIFY,
                     reply_markup=keyboards.yes_no,
                 )
                 await state.set_state(User_States.yes_no_notify)
                 return
-        if match(r"[1-4][а-дА-Д]", text):
+        if fullmatch(r"[1-4][а-дА-Д]", text):
             await msg.answer(consts.BOT_NOT_FOR_JUNS)
             return
 
@@ -172,7 +114,6 @@ async def choose_profiles(call: CallbackQuery, state: FSMContext):
             if len(profiles) < 2:
                 await call.answer(consts.CHOOSE_PROFILE, show_alert=True)
             else:
-                # await call.message.delete()
                 await call.message.answer(
                     consts.YES_NO_NOTIFY,
                     reply_markup=keyboards.yes_no,
@@ -190,7 +131,7 @@ async def choose_profiles(call: CallbackQuery, state: FSMContext):
 @router.message(User_States.yes_no_notify)
 async def yes_no_notify(msg: Message, state: FSMContext):
     if msg.text in consts.TEXT_FOR_KB["yes_no"]:
-        ans = msg.text == "✅Да"
+        ans = msg.text == consts.TEXT_FOR_KB["yes_no"][-1]
     else:
         await not_understend(msg)
         return
@@ -217,7 +158,7 @@ async def yes_no_notify(msg: Message, state: FSMContext):
 @router.message(User_States.menu)
 async def menu(msg: Message, state: FSMContext):
     if msg.text in consts.TEXT_FOR_KB["menu"]:
-        if msg.text == "👤Профиль":
+        if msg.text == consts.TEXT_FOR_KB["menu"][0]:
             data = await state.get_data()
             text = await get_profile_info(
                 data["person_type"], data.get("school_class", "")
@@ -238,7 +179,7 @@ async def menu(msg: Message, state: FSMContext):
                 parse_mode="Markdown",
             )
         else:
-            if msg.text == "🗓Расписаниe":
+            if msg.text == consts.TEXT_FOR_KB["menu"][-1]:
                 new_state = "schedule"
                 keyboard = keyboards.schedule
             else:
@@ -290,7 +231,7 @@ async def schedule(msg: Message, state: FSMContext):
         if index_now_weekday == 6:
             await msg.answer("Уроков нету😃")
             return
-        weekdays = consts.SCHOOL_DAYS * 2
+        weekdays = consts.DAYS * 2
         now_weekday = weekdays[index_now_weekday]
         if data.get("letter", ""):
             school_class = data["school_class"] + (
@@ -314,9 +255,9 @@ async def schedule(msg: Message, state: FSMContext):
             if not id_photo_exists and msg_sended_photo.photo:
                 photo_id = msg_sended_photo.photo[-1].file_id
                 await redis.add_id_schedule(key, photo_id)
-        except:
+        except Exception as e:
             logging.error(
-                f"Нет такого файла info: @{msg.chat.username} {msg.chat.first_name} {school_class}"
+                f"Ошибка отправки расписания info: @{msg.chat.username} {msg.chat.first_name} {school_class}\n{e}"
             )
             await msg.answer("Ошибка")
     else:

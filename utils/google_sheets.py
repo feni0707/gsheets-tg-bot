@@ -190,7 +190,6 @@ class GoogleTable:
 
     async def __is_table_finaly_edited(self):
         if await self.__is_table_update():
-            return True
             n = 3
             while n:
                 await sleep(100)
