@@ -7,15 +7,16 @@ from asyncpg.pool import Pool
 from datetime import date
 
 from data.consts import PERSON_TYPE_TEXTS, CLASSES_BY_SHIFT
+from data import config
 
 
 class AsyncPostgreSQL:
     async def create_pool(self):
         pool = await asyncpg.create_pool(
-            user="postgres",
+            user=config.DB_USER,
             command_timeout=60,
-            password="qwerty",
-            database="database",
+            password=config.DB_PASSWORD,
+            database=config.DB_DATABASE,
             host="127.0.0.1",
         )
         if isinstance(pool, Pool):

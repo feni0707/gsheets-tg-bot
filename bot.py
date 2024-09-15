@@ -40,22 +40,19 @@ async def main() -> None:
     dp.message.middleware.register(CatchRequestsMiddleware())
     dp.include_router(user.router)
 
-    # await redis_db.set_bot(bot)
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    # asyncio.run(main())
-    # "12Tl6P67Ed1YNVFqlLVER6BJcicn5tUr2ae_CtbawQYs",
     school_schedule_1_shift = GoogleTable(
-        "credentials.json",
+        "data/credentials.json",
         "1ajP6yOJX8QxYgcbG9HCkRpqiDS81pphIBju9a_HBMbk",
         1,
     )
 
     school_schedule_2_shift = GoogleTable(
-        "credentials.json",
+        "data/credentials.json",
         "1HTUYHHvPxBLZyUbcl2RCLCqn_WXJfCmTL8HaC7AFNQA",
         2,
     )
@@ -65,5 +62,4 @@ if __name__ == "__main__":
     asyncio.ensure_future(school_schedule_1_shift.start_polling())
     asyncio.ensure_future(school_schedule_2_shift.start_polling())
 
-    # loop.run_until_complete(db.create_pool())
     loop.run_forever()
