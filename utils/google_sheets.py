@@ -182,14 +182,16 @@ class GoogleTable:
         key = f"{self.school_shift}_shift_last_schedule"
         last_schedule = await self.__redis.get(key)
         if not in_while:
-            self._last_schedule = loads(last_schedule) if last_shedule else None
+            self._last_schedule = loads(last_schedule) if last_schedule else None
         if not last_schedule or not (self.__school_schedule == loads(last_schedule)):
             await self.__redis.set(key, dumps(self.__school_schedule))
+            logging.info(f"Расписание {self.school_shift} смены добавлено в кеш")
             return True
         return False
 
     async def __is_table_finaly_edited(self):
         if await self.__is_table_update():
+            return True
             n = 3
             while n:
                 await sleep(100)

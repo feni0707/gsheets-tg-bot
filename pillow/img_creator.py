@@ -125,7 +125,7 @@ class ImgSchedule:
                     index - 1 + is_time_to_begin
                 ] = new_item
                 if self.__is_high_class:
-                    print(self.__day, self.__merged_cells[self.__day], item)
+                    # print(self.__day, self.__merged_cells[self.__day], item)
                     self.__is_time_begin_set = item in self.__merged_cells[self.__day]
                     if self.__is_time_begin_set:
                         self.__merged_cells[self.__day].remove(item)

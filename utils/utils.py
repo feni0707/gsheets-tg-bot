@@ -28,13 +28,19 @@ async def send_notify_to_users(
 ):
     schedules = {"last": last_school_schedule, "new": new_school_schedule}
     count_notify_users = 0
+
     for school_class, list_user_id in users_by_class.items():
         index_now_day = datetime.today().weekday()
         days = SCHOOL_DAYS * 2
         for day in days[index_now_day : index_now_day + 2]:
+            if day == 6:
+                continue
             current_schedules = {}
             for time, schedule in schedules.items():
-                current_schedules[time] = schedule[school_class][day]
+                try:
+                    current_schedules[time] = schedule[school_class][day]
+                except:
+                    logging.error(f"{schedule}\n{schedule[school_class]}\n{day}")
                 if school_class.isdigit():
                     current_schedules[time] = [
                         item for lst in current_schedules[time].values() for item in lst

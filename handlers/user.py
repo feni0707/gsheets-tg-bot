@@ -78,7 +78,6 @@ async def start_menu(msg: Message, state: FSMContext):
             await state.update_data(person_type=person_type)
             await state.set_state(new_state)
             await msg.answer(text=text, reply_markup=keyboard)
-            await msg.answer(text)
     else:
         await not_understend(msg)
 
@@ -307,7 +306,7 @@ async def settings(msg: Message, state: FSMContext):
 async def confimation_reset_settings(msg: Message, state: FSMContext):
     buttons = consts.TEXT_FOR_KB["yes_no"]
     if msg.text in buttons:
-        if msg.text == buttons[0]:
+        if msg.text == buttons[-1]:
             await state.set_state(None)
             await start(msg, state)
         else:
