@@ -64,7 +64,7 @@ async def menu_or_reset(msg: Message, state: FSMContext):
         else:
             await get_menu(msg, state)
     else:
-        await not_understend(msg)
+        await not_understend(msg, state)
 
 
 @router.message(User_States.start_menu)
@@ -79,7 +79,7 @@ async def start_menu(msg: Message, state: FSMContext):
             await state.set_state(new_state)
             await msg.answer(text=text, reply_markup=keyboard)
     else:
-        await not_understend(msg)
+        await not_understend(msg, state)
 
 
 @router.message(User_States.choose_class)
@@ -132,7 +132,7 @@ async def yes_no_notify(msg: Message, state: FSMContext):
     if msg.text in consts.TEXT_FOR_KB["yes_no"]:
         ans = msg.text == consts.TEXT_FOR_KB["yes_no"][-1]
     else:
-        await not_understend(msg)
+        await not_understend(msg, state)
         return
     data = await state.get_data()
     date = msg.date.strftime("%d-%m-%Y")
@@ -206,14 +206,14 @@ async def menu(msg: Message, state: FSMContext):
                 recieve_notifications=data.get("recieve_notifications", False),
             )
     else:
-        await not_understend(msg)
+        await not_understend(msg, state)
         return
 
 
 @router.message(User_States.schedule)
 async def schedule(msg: Message, state: FSMContext):
     if msg.text not in consts.TEXT_FOR_KB["schedule"]:
-        await not_understend(msg)
+        await not_understend(msg, state)
         return
     if msg.text == "🔙Назад":
         await msg.answer(msg.text, reply_markup=keyboards.menu)
@@ -299,7 +299,7 @@ async def settings(msg: Message, state: FSMContext):
             await msg.answer(msg.text, reply_markup=keyboards.menu)
             await state.set_state(User_States.menu)
     else:
-        await not_understend(msg)
+        await not_understend(msg, state)
 
 
 @router.message(User_States.confimation_reset_settings)
@@ -318,12 +318,28 @@ async def confimation_reset_settings(msg: Message, state: FSMContext):
             )
             await state.set_state(User_States.settings)
     else:
-        await not_understend(msg)
+        await not_understend(msg, state)
 
 
 @router.message()
-async def not_understend(msg: Message):
+async def not_understend(msg: Message, state: FSMContext):
+    state_user = await state.get_state()
+    state_user = state_user[12:] if state_user else ""
     logging.info(
-        f"Пользователь @{msg.chat.username} {msg.chat.full_name} написал: {msg.text}"
+        f"Пользователь {msg.chat.full_name} (@{msg.chat.username}, state: {state_user}) написал: {msg.text}"
     )
-    await msg.answer("Я вас не понял. Чтобы перейти в меню нажмите на /menu")
+    arg = {}
+    if state_user:
+        if state_user != "settings":
+            arg["reply_markup"] = keyboards[state_user]
+        else:
+            recieve_notifications = (await state.get_data())["recieve_notifications"]
+            arg["reply_markup"] = await get_settings_kb(recieve_notifications)
+
+    await msg.answer("Я вас не понял", **arg)
+    if state_user in ("start_menu", "yes_no_notify"):
+        texts = {
+            "start_menu": consts.TEMPLATE_START.substitute(user=msg.chat.full_name),
+            "yes_no_notify": consts.YES_NO_NOTIFY,
+        }
+        await msg.answer(texts[state_user])

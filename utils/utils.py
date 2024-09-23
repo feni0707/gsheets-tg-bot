@@ -51,10 +51,10 @@ async def send_notify_to_users(
                 # print(school_class, day, "нету расписания")
                 continue
             elif not list(filter(bool, current_schedules["last"])):
-                text = "появилось"
+                text = "Появилось"
                 # print(school_class, day, "расписание появилось")
             elif current_schedules["last"] != current_schedules["new"]:
-                text = "изменилось"
+                text = "Изменилось"
                 # print(school_class, day, "расписание изменилось")
             else:
                 # print(school_class, day, "расписание не изменилось")
@@ -66,7 +66,7 @@ async def send_notify_to_users(
             for user_id in list_user_id:
                 try:
                     await bot.send_message(
-                        user_id, f"🔔Расписание на {day_edited_schedule} {text}"
+                        user_id, f"🔔{text} расписание на {day_edited_schedule}"
                     )
                     count_notify_users += 1
                 except:

@@ -58,4 +58,6 @@ async def get_settings_kb(notify: bool):
     )
 
 
+for key in ("confimation_reset_settings", "yes_no_notify"):
+    kb_data[key] = kb_data["yes_no"]
 keyboards = DotMap(kb_data)
