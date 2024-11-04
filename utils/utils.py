@@ -40,7 +40,7 @@ async def send_notify_to_users(
                 try:
                     current_schedules[time] = schedule[school_class][day]
                 except:
-                    logging.error(f"{schedule}\n{schedule[school_class]}\n{day}")
+                    logging.error(f"{schedule}\n{school_class}\n{day}")
                 if school_class.isdigit():
                     current_schedules[time] = [
                         item for lst in current_schedules[time].values() for item in lst
