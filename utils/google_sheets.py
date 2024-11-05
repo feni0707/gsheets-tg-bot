@@ -205,6 +205,7 @@ class GoogleTable:
         await self.__get_table()
         logging.info(f"start_polling schedule {self.school_shift} shift")
         while True:
+            logging.info(f"Поллинг расписания {self.school_shift} смены")
             if await self.__is_table_finaly_edited():
                 from bot import bot
 
