@@ -47,7 +47,7 @@ async def main() -> None:
 if __name__ == "__main__":
     school_schedule_1_shift = GoogleTable(
         "data/credentials.json",
-        "1ajP6yOJX8QxYgcbG9HCkRpqiDS81pphIBju9a_HBMbk",
+        "1ukiRpvVSzrazcaRLrDzFOEGurAMOdj2_hpaOksSAy-k",
         1,
     )
 

@@ -45,7 +45,7 @@ class AsyncPostgreSQL:
                     (user_id, nick_name, first_name, last_action_date, person_type, \
                     school_class, profiles, recieve_notifications, reg_date) \
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
-                    type_notify = "Зарегистрован"
+                    type_notify = "Зарегистрирован"
                     variable_args = (reg_date,)
                 else:
                     request = "UPDATE users \
