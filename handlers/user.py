@@ -1,6 +1,5 @@
 from contextlib import suppress
-from aiogram import F, Dispatcher, Router, Bot
-from aiogram.fsm.storage.base import StorageKey
+from aiogram import F, Router
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove, FSInputFile
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
@@ -9,19 +8,14 @@ from re import fullmatch
 from datetime import datetime
 import logging
 import asyncio
-from time import time
 from os.path import isfile as is_file_exists
-
-from dotmap import pprint
 
 from keyboards.keyboards import get_choose_profile_keyboard, get_settings_kb, keyboards
 from states.user import User_States
 from data import consts
-from utils.utils import get_profile_info, send_notify_to_users
+from utils.utils import get_profile_info
 from utils.async_postgresql import AsyncPostgreSQL
 from utils.async_redis import AsyncRedis
-
-# from bot import bot
 
 router = Router()
 db = AsyncPostgreSQL()

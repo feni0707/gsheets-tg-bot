@@ -1,15 +1,13 @@
-from pprint import pprint
 from PIL import Image, ImageDraw, ImageFont
 from re import search
 
-from data.consts import SCHOOL_DAYS, TIME_BEGINNINGS_THE_LESSONS_FOR_SHIFT
+from data.consts import SCHOOL_DAYS
 from utils.utils import delete_photo
 
 
 class ImgSchedule:
     def __init__(self, school_shift: int) -> None:
         self.__school_shift = school_shift
-        self.__is_time_begin_set = False
 
     async def __get_properties_text(self, text, is_bold, draw, is_merged, size_font=80):
         font = ImageFont.truetype(
@@ -39,7 +37,6 @@ class ImgSchedule:
         )
 
     async def __prepare_to_work(self, school_class, day, lessons_of_class):
-        self.__is_time_begin_set = False
         self.__school_class, self.__day = school_class, day
         self.__is_high_class = school_class.isdigit()
         await self.__get_current_template_img()
@@ -105,35 +102,6 @@ class ImgSchedule:
                     ),
                     fill="black",
                 )
-
-    async def __set_time_begin_to_school(self):
-        for index, item in enumerate(self.__lessons_of_class[self.__text]):
-            if item:
-                matches = search(r"\d{1,2}\.\d{1,2}", item)
-                is_time_to_begin = True if matches and matches.group() else False
-                key = (
-                    f"{self.__school_shift} смена"
-                    if self.__day != SCHOOL_DAYS[-1]
-                    else "суббота"
-                )
-                new_item = (
-                    "к "
-                    + TIME_BEGINNINGS_THE_LESSONS_FOR_SHIFT[key][
-                        index - 1 + is_time_to_begin
-                    ]
-                )
-                self.__lessons_of_class[self.__text][
-                    index - 1 + is_time_to_begin
-                ] = new_item
-                if self.__is_high_class:
-                    # print(self.__day, self.__merged_cells[self.__day], item)
-                    self.__is_time_begin_set = item in self.__merged_cells[self.__day]
-                    if self.__is_time_begin_set:
-                        self.__merged_cells[self.__day].remove(item)
-                        self.__merged_cells[self.__day].append(new_item)
-                else:
-                    self.__is_time_begin_set = True
-                break
 
     async def __for_lesson_in_lessons(self):
         for index, text_for_cell in enumerate(self.__lessons_of_class[self.__text]):

@@ -1,5 +1,3 @@
-from typing import List
-
 import asyncpg
 import logging
 from asyncpg import Connection

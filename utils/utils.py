@@ -1,4 +1,3 @@
-from pprint import pprint
 from string import Template
 from typing import Dict, List
 from aiogram import Bot

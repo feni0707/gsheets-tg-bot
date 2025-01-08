@@ -1,21 +1,13 @@
 from typing import Dict, List
 import gspread_asyncio
-from pprint import pprint
-from re import search
 from string import ascii_uppercase
 from google.oauth2.service_account import Credentials
 from json import dumps, loads
 from asyncio import sleep
 import logging
-from time import time
 import aioredis
 
-from data.consts import (
-    FIRST_SHIFT_CLASSES,
-    SCHOOL_DAYS,
-    SECOND_SHIFT_CLASSES,
-    TIME_BEGINNINGS_THE_LESSONS_FOR_SHIFT,
-)
+from data.consts import FIRST_SHIFT_CLASSES, SCHOOL_DAYS, SECOND_SHIFT_CLASSES
 from pillow.img_creator import ImgSchedule
 from utils.utils import send_notify_to_users
 from handlers.user import db
@@ -48,11 +40,9 @@ class GoogleTable:
         agc = await agcm.authorize()
         ss = await agc.open_by_key(self.googlesheet_file_key)
         table = await ss.get_sheet1()
-        # print(await table.find("5А"))
         self.__table: gspread_asyncio.AsyncioGspreadWorksheet = table
 
     async def __set_consts(self):
-        self.__is_time_begin_set = {}
         self.__col_to_end = 56 if self.school_shift == 1 else 61
         self.__len_day = 8 if self.school_shift == 1 else 9
         if self.school_shift == 1:
@@ -124,32 +114,6 @@ class GoogleTable:
 
         for key in self.__classes[-2:]:
             del self.__school_schedule[key]
-
-    async def __set_time_begin_to_school(self, school_class, day, lessons_of_class):
-        for index, item in enumerate(lessons_of_class):
-            if item:
-                matches = search(r"\d{1,2}\.\d{1,2}", item)
-                is_time_to_begin = True if matches and matches.group() else False
-                new_index = index - 1 + is_time_to_begin
-                key = (
-                    f"{self.school_shift} смена"
-                    if day != SCHOOL_DAYS[-1]
-                    else "суббота"
-                )
-                new_item = "к " + TIME_BEGINNINGS_THE_LESSONS_FOR_SHIFT[key][new_index]
-                self.__school_schedule[school_class][day][new_index] = new_item
-                if len(school_class) > 2:
-                    # print(day, item in self.__merged_cells[day], item, is_time_to_begin)
-                    self.__is_time_begin_set[day] = item in self.__merged_cells[day]
-                    if self.__is_time_begin_set[day]:
-                        self.__merged_cells[day][new_index] = new_item
-                        # self.__merged_cells[day].append(new_item)
-                    # print(2, day, new_item in self.__merged_cells[day], new_item)
-                    # print(self.__merged_cells[day])
-                else:
-                    self.__is_time_begin_set[day] = True
-
-                break
 
     async def __get_schedule(self):
         await self.__set_consts()
