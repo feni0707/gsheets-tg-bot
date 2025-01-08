@@ -191,6 +191,7 @@ class GoogleTable:
 
     async def __is_table_finaly_edited(self):
         if await self.__is_table_update():
+            return True
             n = 3
             while n:
                 await sleep(100)
@@ -206,26 +207,25 @@ class GoogleTable:
         logging.info(f"start_polling schedule {self.school_shift} shift")
         while True:
             logging.info(f"Поллинг расписания {self.school_shift} смены")
-            if await self.__is_table_finaly_edited():
-                from bot import bot
+            if not (await self.__is_table_finaly_edited()):
+                continue
+            from bot import bot
 
-                logging.info(f"Расписание {self.school_shift} смены изменено")
-                img = ImgSchedule(self.school_shift)
-                # last_schedule = await self.__redis.get(
-                #     f"{self.school_shift}_shift_last_schedule"
-                # )
-                data_users = await db.get_notify_true_users_group_by_class(
-                    self.school_shift
-                )
-                await img.schedule_to_pictures(
-                    self.__school_schedule, self.__merged_cells
-                )
-                count_notify_users = await send_notify_to_users(
-                    bot, self._last_schedule, self.__school_schedule, data_users
-                )
-                if count_notify_users:
-                    text = f"Уведомления разосланы {count_notify_users} пользователям"
-                else:
-                    text = "Уведомления рассылать некому"
-                logging.info(f"{self.school_shift} смена | {text}")
+            logging.info(f"Расписание {self.school_shift} смены изменено")
+            img = ImgSchedule(self.school_shift)
+            # last_schedule = await self.__redis.get(
+            #     f"{self.school_shift}_shift_last_schedule"
+            # )
+            data_users = await db.get_notify_true_users_group_by_class(
+                self.school_shift
+            )
+            await img.schedule_to_pictures(self.__school_schedule, self.__merged_cells)
+            count_notify_users = await send_notify_to_users(
+                bot, self._last_schedule, self.__school_schedule, data_users
+            )
+            if count_notify_users:
+                text = f"Уведомления разосланы {count_notify_users} пользователям"
+            else:
+                text = "Уведомления рассылать некому"
+            logging.info(f"{self.school_shift} смена | {text}")
             await sleep(300)

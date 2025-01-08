@@ -89,3 +89,12 @@ def delete_last_day_photos():
                 os.remove(file_path)
         except Exception as e:
             logging.error(f"Ошибка при удалении файла {file_path}. {e}")
+
+
+def delete_photo(school_class, day):
+    photo_path = f"pillow/images/schedules/{day}/{school_class}"
+    try:
+        if os.path.exists(photo_path):
+            os.remove(photo_path)
+    except Exception as e:
+        print(f"{e} | {day}/{school_class}")

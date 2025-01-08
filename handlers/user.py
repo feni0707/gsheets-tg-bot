@@ -69,15 +69,14 @@ async def menu_or_reset(msg: Message, state: FSMContext):
 
 @router.message(User_States.start_menu)
 async def start_menu(msg: Message, state: FSMContext):
-    if msg.text in consts.TEXT_FOR_KB["start_menu"]:
-        if msg.text != "👩🏻‍🏫Учитель":
-            person_type = "student" if msg.text == "🎓Ученик" else "parent"
-            text = consts.CHOOSE_CLASS_DICT[person_type]
-            new_state = User_States.choose_class
-            keyboard = ReplyKeyboardRemove()
-            await state.update_data(person_type=person_type)
-            await state.set_state(new_state)
-            await msg.answer(text=text, reply_markup=keyboard)
+    if isinstance(msg.text, str) and msg.text in consts.TEXT_FOR_KB["start_menu"]:
+        person_type = consts.PERSON_TYPE_FOR_DB[msg.text]
+        text = consts.CHOOSE_CLASS_DICT[person_type]
+        new_state = User_States.choose_class
+        keyboard = ReplyKeyboardRemove()
+        await state.update_data(person_type=person_type)
+        await state.set_state(new_state)
+        await msg.answer(text=text, reply_markup=keyboard)
     else:
         await not_understend(msg, state)
 

@@ -3,6 +3,7 @@ from PIL import Image, ImageDraw, ImageFont
 from re import search
 
 from data.consts import SCHOOL_DAYS, TIME_BEGINNINGS_THE_LESSONS_FOR_SHIFT
+from utils.utils import delete_photo
 
 
 class ImgSchedule:
@@ -202,3 +203,5 @@ class ImgSchedule:
                     lessons = data[:]
                 if any(lessons):
                     await self.__create_img_and_save(school_class, day, data)
+                else:
+                    delete_photo(school_class, day)
