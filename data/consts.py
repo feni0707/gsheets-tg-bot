@@ -1,5 +1,10 @@
 from string import Template
 
+from aiogram.types import ReplyKeyboardRemove
+
+from states.user import User_States
+from keyboards.keyboards import keyboards
+
 TEMPLATE_START = Template("Добро пожаловать $user. Выберите кто вы.")
 NOTIFY = "Хотите ли вы получать уведомления?"
 CHOOSE_CLASS_DICT = {
@@ -16,6 +21,21 @@ CONFIRMATION_RESET = (
 TEMPLATE_RESET_NOTFY = Template("Уведомления $state_notify")
 CANCEL_RESET = "Хорошо"
 TECHNICAL_WORK = "В данный момент ведуться технические работы, попробуйте позже"
+START_MENU_TEXT = {
+    "student": "Введите ваш класс, а затем букву, например - 7Б",
+    "parent": "Введите класс, а затем букву вашего ребёнка, например - 7Б",
+    "teacher": YES_NO_NOTIFY,
+}
+START_MENU_STATE = {
+    "👨‍👨‍👦Родитель": User_States.yes_no_notify,
+    "👩🏻‍🏫Учитель": User_States.choose_class,
+    "🎓Ученик": User_States.choose_class,
+}
+START_MENU_KB = {
+    "👨‍👨‍👦Родитель": ReplyKeyboardRemove,
+    "👩🏻‍🏫Учитель": keyboards.yes_no,
+    "🎓Ученик": ReplyKeyboardRemove,
+}
 DICT_PROFILES = {
     "Society": "Общество",
     "History": "История",

@@ -1,7 +1,9 @@
 from string import Template
-from typing import Dict, List
+from typing import Any, Dict, List
 from aiogram import Bot
 from datetime import datetime
+
+from aiogram.types import Message
 from data.consts import SCHOOL_DAYS
 from utils.async_redis import AsyncRedis
 import logging
@@ -9,7 +11,7 @@ import logging
 redis = AsyncRedis()
 
 
-async def get_profile_info(person_type: str, school_class: str):
+async def get_profile_info(person_type: str):
     answer = "👤*Тип аккаунта*: $person_type\n🔔*Уведомления*: $status_of_notify"
     if person_type != "teacher":
         answer += "\n🏫*Класс*: $school_class"
@@ -97,3 +99,21 @@ def delete_photo(school_class, day):
             os.remove(photo_path)
     except Exception as e:
         print(f"{e} | {day}/{school_class}")
+
+
+def get_user_args(msg: Message, data: Dict[str, Any]) -> Dict[str, Any]:
+    date = msg.date.strftime("%d-%m-%Y")
+    profiles = data.get("profiles", None)
+    args = {
+        "user_id": msg.chat.id,
+        "nick_name": msg.chat.username,
+        "first_name": msg.chat.first_name,
+        "reg_date": date,
+        "last_action_date": date,
+        "person_type": data.get("person_type", None),
+        "school_class": data.get("school_class", "") + data.get("letter", "").upper(),
+        "profiles": ", ".join(profiles) if profiles else None,
+        "recieve_notifications": data.get("recieve_notifications", False),
+    }
+
+    return args

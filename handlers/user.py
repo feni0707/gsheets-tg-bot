@@ -13,7 +13,7 @@ from os.path import isfile as is_file_exists
 from keyboards.keyboards import get_choose_profile_keyboard, get_settings_kb, keyboards
 from states.user import User_States
 from data import consts
-from utils.utils import get_profile_info
+from utils.utils import get_profile_info, get_user_args
 from utils.async_postgresql import AsyncPostgreSQL
 from utils.async_redis import AsyncRedis
 
@@ -63,11 +63,13 @@ async def menu_or_reset(msg: Message, state: FSMContext):
 
 @router.message(User_States.start_menu)
 async def start_menu(msg: Message, state: FSMContext):
-    if isinstance(msg.text, str) and msg.text in consts.TEXT_FOR_KB["start_menu"]:
-        person_type = consts.PERSON_TYPE_FOR_DB[msg.text]
-        text = consts.CHOOSE_CLASS_DICT[person_type]
-        new_state = User_States.choose_class
-        keyboard = ReplyKeyboardRemove()
+    text = msg.text
+
+    if isinstance(text, str) and text in consts.TEXT_FOR_KB["start_menu"]:
+        person_type = consts.PERSON_TYPE_FOR_DB[text]
+        text = consts.START_MENU_TEXT[person_type]
+        new_state = consts.START_MENU_STATE[text]
+        keyboard = consts.START_MENU_KB[text]
         await state.update_data(person_type=person_type)
         await state.set_state(new_state)
         await msg.answer(text=text, reply_markup=keyboard)
@@ -128,19 +130,7 @@ async def yes_no_notify(msg: Message, state: FSMContext):
         await not_understend(msg, state)
         return
     data = await state.get_data()
-    date = msg.date.strftime("%d-%m-%Y")
-    profiles = data.get("profiles", None)
-    await db.add_user(
-        user_id=msg.chat.id,
-        nick_name=msg.chat.username,
-        first_name=msg.chat.first_name,
-        reg_date=date,
-        last_action_date=date,
-        person_type=data.get("person_type", None),
-        school_class=data.get("school_class", "") + data.get("letter", "").upper(),
-        profiles=", ".join(profiles) if profiles else None,
-        recieve_notifications=ans,
-    )
+    await db.add_user(**get_user_args(msg, data))
 
     await state.update_data(recieve_notifications=ans)
     await msg.answer(consts.REGISTR_SUCCESSFUL, reply_markup=keyboards.menu)
@@ -149,58 +139,42 @@ async def yes_no_notify(msg: Message, state: FSMContext):
 
 @router.message(User_States.menu)
 async def menu(msg: Message, state: FSMContext):
-    if msg.text in consts.TEXT_FOR_KB["menu"]:
-        if msg.text == consts.TEXT_FOR_KB["menu"][0]:
-            data = await state.get_data()
-            text = await get_profile_info(
-                data["person_type"], data.get("school_class", "")
-            )
-            await msg.answer(
-                text.substitute(
-                    person_type=consts.PERSON_TYPE_TEXTS[data["person_type"]],
-                    school_class=data.get("school_class", "")
-                    + data.get("letter", "").upper(),
-                    profiles=", ".join(
-                        consts.DICT_PROFILES[profile]
-                        for profile in data.get("profiles", [])
-                    ),
-                    status_of_notify=(
-                        "Включены" if data["recieve_notifications"] else "Отключены"
-                    ),
-                ),
-                parse_mode="Markdown",
-            )
-        else:
-            if msg.text == consts.TEXT_FOR_KB["menu"][-1]:
-                new_state = "schedule"
-                keyboard = keyboards.schedule
-            else:
-                new_state = "settings"
-                keyboard = await get_settings_kb(
-                    (await state.get_data())["recieve_notifications"]
-                )
-            await msg.answer(msg.text, reply_markup=keyboard)
-            await state.set_state(getattr(User_States, new_state))
-
-        if not await db.user_exists(msg.chat.id):
-            data = await state.get_data()
-            date = msg.date.strftime("%d-%m-%Y")
-            profiles = data.get("profiles", None)
-            await db.add_user(
-                user_id=msg.chat.id,
-                nick_name=msg.chat.username,
-                first_name=msg.chat.first_name,
-                reg_date=date,
-                last_action_date=date,
-                person_type=data.get("person_type", None),
-                school_class=data.get("school_class", "")
-                + data.get("letter", "").upper(),
-                profiles=", ".join(profiles) if profiles else None,
-                recieve_notifications=data.get("recieve_notifications", False),
-            )
-    else:
+    if msg.text not in consts.TEXT_FOR_KB["menu"]:
         await not_understend(msg, state)
         return
+    if msg.text == consts.TEXT_FOR_KB["menu"][0]:
+        data = await state.get_data()
+        text = await get_profile_info(data["person_type"])
+        await msg.answer(
+            text.substitute(
+                person_type=consts.PERSON_TYPE_TEXTS[data["person_type"]],
+                school_class=data.get("school_class", "")
+                + data.get("letter", "").upper(),
+                # profiles=", ".join(
+                #     consts.DICT_PROFILES[profile]
+                #     for profile in data.get("profiles", [])
+                # ),
+                status_of_notify=(
+                    "Включены" if data["recieve_notifications"] else "Отключены"
+                ),
+            ),
+            parse_mode="Markdown",
+        )
+    else:
+        if msg.text == consts.TEXT_FOR_KB["menu"][-1]:
+            new_state = "schedule"
+            keyboard = keyboards.schedule
+        else:
+            new_state = "settings"
+            keyboard = await get_settings_kb(
+                (await state.get_data())["recieve_notifications"]
+            )
+        await msg.answer(msg.text, reply_markup=keyboard)
+        await state.set_state(getattr(User_States, new_state))
+
+    if not await db.user_exists(msg.chat.id):
+        data = await state.get_data()
+        await db.add_user(**get_user_args(msg, data))
 
 
 @router.message(User_States.schedule)
@@ -257,19 +231,7 @@ async def schedule(msg: Message, state: FSMContext):
 
     if not await db.user_exists(msg.chat.id):
         data = await state.get_data()
-        date = msg.date.strftime("%d-%m-%Y")
-        profiles = data.get("profiles", None)
-        await db.add_user(
-            user_id=msg.chat.id,
-            nick_name=msg.chat.username,
-            first_name=msg.chat.first_name,
-            reg_date=date,
-            last_action_date=date,
-            person_type=data.get("person_type", None),
-            school_class=data.get("school_class", "") + data.get("letter", "").upper(),
-            profiles=", ".join(profiles) if profiles else None,
-            recieve_notifications=data.get("recieve_notifications", False),
-        )
+        await db.add_user(**get_user_args(msg, data))
 
 
 @router.message(User_States.settings)
