@@ -23,12 +23,15 @@ async def get_profile_info(person_type: str):
 
 async def send_notify_to_users(
     bot: Bot,
+    shift,
     last_school_schedule,
     new_school_schedule,
     users_by_class: Dict[str, List[int]],
+    teachers,
 ):
     schedules = {"last": last_school_schedule, "new": new_school_schedule}
     count_notify_users = 0
+    days_notify = []
 
     for school_class, list_user_id in users_by_class.items():
         index_now_day = datetime.today().weekday()
@@ -46,32 +49,49 @@ async def send_notify_to_users(
                     current_schedules[time] = [
                         item for lst in current_schedules[time].values() for item in lst
                     ]
-                # current_schedules[time] = list(filter(bool, current_schedules[time]))
-            # print(current_schedules)
             if not list(filter(bool, current_schedules["new"])):
-                # print(school_class, day, "нету расписания")
                 continue
             elif not list(filter(bool, current_schedules["last"])):
                 text = "Появилось"
-                # print(school_class, day, "расписание появилось")
             elif current_schedules["last"] != current_schedules["new"]:
                 text = "Изменилось"
-                # print(school_class, day, "расписание изменилось")
             else:
-                # print(school_class, day, "расписание не изменилось")
                 continue
             day_edited_schedule = (
                 "сегодня" if index_now_day == SCHOOL_DAYS.index(day) else "завтра"
             )
+            data = (text, day_edited_schedule)
+            if data not in days_notify:
+                days_notify.append(data)
+
             await redis.del_id_schedule(f"{day}:{school_class.upper()}")
             for user_id in list_user_id:
+                add_text = f"{shift} смены" if user_id in teachers else ""
                 try:
                     await bot.send_message(
-                        user_id, f"🔔{text} расписание на {day_edited_schedule}"
+                        user_id,
+                        f"🔔{text} расписание {add_text} на {day_edited_schedule}",
                     )
                     count_notify_users += 1
                 except:
                     pass
+
+    if days_notify:
+        for teacher_id in teachers:
+            flag = False
+            for text, day_edited_schedule in days_notify:
+                try:
+                    await bot.send_message(
+                        teacher_id,
+                        f"🔔{text} расписание {shift} смены на {day_edited_schedule}",
+                    )
+                    flag = True
+                except:
+                    pass
+
+            if not flag:
+                continue
+            count_notify_users += 1
 
     return count_notify_users
 

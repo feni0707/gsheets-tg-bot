@@ -1,5 +1,5 @@
 from aiogram import Router
-from aiogram.types import Message, FSInputFile
+from aiogram.types import Message, FSInputFile, ReplyKeyboardRemove
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from re import fullmatch
@@ -61,13 +61,14 @@ async def menu_or_reset(msg: Message, state: FSMContext):
 
 @router.message(User_States.start_menu)
 async def start_menu(msg: Message, state: FSMContext):
-    text = msg.text
-
-    if isinstance(text, str) and text in consts.TEXT_FOR_KB["start_menu"]:
-        person_type = consts.PERSON_TYPE_FOR_DB[text]
+    if isinstance(msg.text, str) and msg.text in consts.TEXT_FOR_KB["start_menu"]:
+        person_type = consts.PERSON_TYPE_FOR_DB[msg.text]
         text = consts.START_MENU_TEXT[person_type]
-        new_state = consts.START_MENU_STATE[text]
-        keyboard = consts.START_MENU_KB[text]
+        new_state = consts.START_MENU_STATE[msg.text]
+        if person_type != "teacher":
+            keyboard = ReplyKeyboardRemove()
+        else:
+            keyboard = keyboards.yes_no
         await state.update_data(person_type=person_type)
         await state.set_state(new_state)
         await msg.answer(text=text, reply_markup=keyboard)
@@ -118,8 +119,8 @@ async def menu(msg: Message, state: FSMContext):
     if msg.text not in consts.TEXT_FOR_KB["menu"]:
         await not_understend(msg, state)
         return
+    data = await state.get_data()
     if msg.text == consts.TEXT_FOR_KB["menu"][0]:
-        data = await state.get_data()
         text = await get_profile_info(data["person_type"])
         await msg.answer(
             text.substitute(
@@ -139,7 +140,7 @@ async def menu(msg: Message, state: FSMContext):
     else:
         if msg.text == consts.TEXT_FOR_KB["menu"][-1]:
             new_state = "schedule"
-            keyboard = keyboards.schedule
+            keyboard = keyboards.get(f'{data["person_type"]}_schedule')
         else:
             new_state = "settings"
             keyboard = await get_settings_kb(
@@ -149,13 +150,12 @@ async def menu(msg: Message, state: FSMContext):
         await state.set_state(getattr(User_States, new_state))
 
     if not await db.user_exists(msg.chat.id):
-        data = await state.get_data()
         await db.add_user(**get_user_args(msg, data))
 
 
 @router.message(User_States.schedule)
 async def schedule(msg: Message, state: FSMContext):
-    if msg.text not in consts.TEXT_FOR_KB["schedule"]:
+    if msg.text not in consts.TEXT_FOR_KB["all_schedule"]:
         await not_understend(msg, state)
         return
     if msg.text == "🔙Назад":
@@ -203,7 +203,11 @@ async def schedule(msg: Message, state: FSMContext):
             )
             await msg.answer("Ошибка")
     else:
-        await msg.answer(msg.text)
+        if msg.text == consts.TEXT_FOR_KB["teacher_schedule"][0]:
+            text = f"<a href='https://docs.google.com/spreadsheets/d/1ukiRpvVSzrazcaRLrDzFOEGurAMOdj2_hpaOksSAy-k/edit?usp=sharing'>Расписание 1 смены доступно по ссылке</a>"
+        else:
+            text = f"<a href='https://docs.google.com/spreadsheets/d/1HTUYHHvPxBLZyUbcl2RCLCqn_WXJfCmTL8HaC7AFNQA/edit?usp=sharing'>Расписание 2 смены доступно по ссылке</a>"
+        await msg.answer(text, parse_mode="HTML")
 
     if not await db.user_exists(msg.chat.id):
         data = await state.get_data()
@@ -261,8 +265,11 @@ async def not_understend(msg: Message, state: FSMContext):
     )
     arg = {}
     if state_user:
-        if state_user != "settings":
+        if state_user not in ("schedule", "settings"):
             arg["reply_markup"] = keyboards[state_user]
+        elif state_user == "schedule":
+            data = await state.get_data()
+            arg["reply_markup"] = keyboards.get(f"{data['person_type']}_schedule")
         else:
             recieve_notifications = (await state.get_data())["recieve_notifications"]
             arg["reply_markup"] = await get_settings_kb(recieve_notifications)

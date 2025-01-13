@@ -171,6 +171,7 @@ class GoogleTable:
         while True:
             logging.info(f"Поллинг расписания {self.school_shift} смены")
             if not (await self.__is_table_finaly_edited()):
+                await sleep(300)
                 continue
             from bot import bot
 
@@ -182,13 +183,18 @@ class GoogleTable:
             data_users = await db.get_notify_true_users_group_by_class(
                 self.school_shift
             )
+            teachers = await db.get_notify_true_teachers()
             await img.schedule_to_pictures(self.__school_schedule, self.__merged_cells)
             count_notify_users = await send_notify_to_users(
-                bot, self._last_schedule, self.__school_schedule, data_users
+                bot,
+                self.school_shift,
+                self._last_schedule,
+                self.__school_schedule,
+                data_users,
+                teachers,
             )
             if count_notify_users:
                 text = f"Уведомления разосланы {count_notify_users} пользователям"
             else:
                 text = "Уведомления рассылать некому"
             logging.info(f"{self.school_shift} смена | {text}")
-            await sleep(300)

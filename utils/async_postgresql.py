@@ -172,6 +172,15 @@ class AsyncPostgreSQL:
                         ans[key].append(value)
                 return ans
 
+    async def get_notify_true_teachers(self):
+        async with self.pool.acquire() as conn:
+            conn: Connection
+            async with conn.transaction():
+                res = await conn.fetch(
+                    "select user_id from users where users.person_type = 'teacher'"
+                )
+                return [rec[0] for rec in res]
+
     async def increment_school_claseses(self):
         async with self.pool.acquire() as conn:
             conn: Connection
