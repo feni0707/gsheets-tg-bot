@@ -100,28 +100,6 @@ async def choose_class(msg: Message, state: FSMContext):
     )
 
 
-@router.callback_query(User_States.choose_profiles, F.data)
-async def choose_profiles(call: CallbackQuery, state: FSMContext):
-    if isinstance(call.message, Message):
-        profiles = (await state.get_data())["profiles"]
-        if call.data == "done":
-            if len(profiles) < 2:
-                await call.answer(consts.CHOOSE_PROFILE, show_alert=True)
-            else:
-                await call.message.answer(
-                    consts.YES_NO_NOTIFY,
-                    reply_markup=keyboards.yes_no,
-                )
-                await state.set_state(User_States.yes_no_notify)
-        else:
-            keyboard, pressed_buttons = await get_choose_profile_keyboard(
-                profiles, call.data
-            )
-            with suppress(TelegramBadRequest):
-                await call.message.edit_reply_markup(reply_markup=keyboard)
-                await state.update_data(profiles=pressed_buttons)
-
-
 @router.message(User_States.yes_no_notify)
 async def yes_no_notify(msg: Message, state: FSMContext):
     if msg.text in consts.TEXT_FOR_KB["yes_no"]:
