@@ -1,16 +1,14 @@
-from contextlib import suppress
-from aiogram import F, Router
-from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove, FSInputFile
+from aiogram import Router
+from aiogram.types import Message, FSInputFile
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.exceptions import TelegramBadRequest
 from re import fullmatch
 from datetime import datetime
 import logging
 import asyncio
 from os.path import isfile as is_file_exists
 
-from keyboards.keyboards import get_choose_profile_keyboard, get_settings_kb, keyboards
+from keyboards.keyboards import get_settings_kb, keyboards
 from states.user import User_States
 from data import consts
 from utils.utils import get_profile_info, get_user_args

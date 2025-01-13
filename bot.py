@@ -11,10 +11,9 @@ from aiogram.fsm.storage.redis import RedisStorage
 from handlers import user
 from data import config
 
-from middlewares.admin import AdminMiddleware
+# from middlewares.admin import AdminMiddleware
 from middlewares.catch_requests import CatchRequestsMiddleware
 from utils.google_sheets import GoogleTable
-from utils.async_redis import AsyncRedis
 
 
 path.append("..")
