@@ -203,7 +203,7 @@ async def schedule(msg: Message, state: FSMContext):
             )
             await msg.answer("Ошибка")
     else:
-        if msg.text == consts.TEXT_FOR_KB["teacher_schedule"][0]:
+        if msg.text == consts.TEXT_FOR_KB["teacher_schedule"][-1]:
             text = f"<a href='https://docs.google.com/spreadsheets/d/1ukiRpvVSzrazcaRLrDzFOEGurAMOdj2_hpaOksSAy-k/edit?usp=sharing'>Расписание 1 смены доступно по ссылке</a>"
         else:
             text = f"<a href='https://docs.google.com/spreadsheets/d/1HTUYHHvPxBLZyUbcl2RCLCqn_WXJfCmTL8HaC7AFNQA/edit?usp=sharing'>Расписание 2 смены доступно по ссылке</a>"
