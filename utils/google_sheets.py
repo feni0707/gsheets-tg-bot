@@ -65,6 +65,10 @@ class GoogleTable:
             (await self.__table.find(data)).address
             for data in (self.__first_class, self.__last_class)
         ]
+        start2, end2 = await self.__get_ranges(self.__first_class, self.__last_class)
+        logging.info(f"{start=} {end=}")
+        logging.info(f"{start2=} {end2=}")
+        start, end = start2, end2
         end = f"{end[0]}{int(end[1]) + self.__col_to_end}"
         self.__start, self.__end = start, end
         self.__index_end_col = ascii_uppercase.index(self.__end[0])
@@ -198,3 +202,17 @@ class GoogleTable:
             else:
                 text = "Уведомления рассылать некому"
             logging.info(f"{self.school_shift} смена | {text}")
+
+    async def __get_ranges(self, f_c, l_c):
+        d = {"fc": "", "lc": ""}
+        for i, row in enumerate(await self.__table.get_all_values()):
+            for j, el in enumerate(row):
+                if not d["fc"]:
+                    if f_c.replace(" ", "") in el.replace(" ", "").lower():
+                        d["fc"] = f"{ascii_uppercase[j]}{i+1}"
+                elif not d["lc"]:
+                    if l_c.replace(" ", "") in el.replace(" ", "").lower():
+                        d["lc"] = f"{ascii_uppercase[j]}{i+1}"
+                else:
+                    return d.values()
+        return d.values()
