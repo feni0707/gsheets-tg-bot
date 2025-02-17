@@ -32,6 +32,10 @@ async def send_notify_to_users(
     schedules = {"last": last_school_schedule, "new": new_school_schedule}
     count_notify_users = 0
     days_notify = []
+    notifications = {
+        "сегодня": {"Появилось": set(), "Изменилось": set()},
+        "завтра": {"Появилось": set(), "Изменилось": set()},
+    }
 
     for school_class, list_user_id in users_by_class.items():
         index_now_day = datetime.today().weekday()
@@ -64,6 +68,8 @@ async def send_notify_to_users(
             if data not in days_notify:
                 days_notify.append(data)
 
+            notifications[day_edited_schedule][text].add(school_class)
+
             await redis.del_id_schedule(f"{day}:{school_class.upper()}")
             for user_id in list_user_id:
                 add_text = f"{shift} смены" if user_id in teachers else ""
@@ -73,8 +79,10 @@ async def send_notify_to_users(
                         f"🔔{text} расписание {add_text} на {day_edited_schedule}",
                     )
                     count_notify_users += 1
-                except:
-                    pass
+                except Exception as e:
+                    logging.error(f"Ошибка отправки уведомления {user_id} {e}")
+
+    logging.info(f"{notifications}")
 
     if days_notify:
         for teacher_id in teachers:
@@ -86,8 +94,10 @@ async def send_notify_to_users(
                         f"🔔{text} расписание {shift} смены на {day_edited_schedule}",
                     )
                     flag = True
-                except:
-                    pass
+                except Exception as e:
+                    logging.error(
+                        f"Ошибка отправки уведомления учителю {teacher_id} {e}"
+                    )
 
             if not flag:
                 continue
