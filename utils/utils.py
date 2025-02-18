@@ -36,6 +36,12 @@ async def send_notify_to_users(
         "сегодня": {"Появилось": set(), "Изменилось": set()},
         "завтра": {"Появилось": set(), "Изменилось": set()},
     }
+    blocks = 0
+    deactivate = 0
+    another = 0
+
+    b = "Telegram server says - Forbidden: bot was blocked by the user"
+    d = "Telegram server says - Forbidden: user is deactivated"
 
     for school_class, list_user_id in users_by_class.items():
         index_now_day = datetime.today().weekday()
@@ -80,13 +86,20 @@ async def send_notify_to_users(
                     )
                     count_notify_users += 1
                 except Exception as e:
-                    logging.error(f"Ошибка отправки уведомления {user_id} {e}")
+                    if e == b:
+                        blocks += 1
+                    elif e == d:
+                        deactivate += 1
+                    else:
+                        another += 1
+                        logging.error(f"Ошибка отправки уведомления {user_id} {e}")
 
     logging.info(f"{notifications}")
 
     if days_notify:
         for teacher_id in teachers:
             flag = False
+            r = ""
             for text, day_edited_schedule in days_notify:
                 try:
                     await bot.send_message(
@@ -98,10 +111,22 @@ async def send_notify_to_users(
                     logging.error(
                         f"Ошибка отправки уведомления учителю {teacher_id} {e}"
                     )
+                    r = e
 
             if not flag:
+                if r == b:
+                    blocks += 1
+                elif r == d:
+                    deactivate += 1
+                else:
+                    another += 1
+                    logging.error(f"Ошибка отправки уведомления {teacher_id} {r}")
                 continue
             count_notify_users += 1
+
+    logging.info(
+        f"В {shift} смене заблокировано {blocks}, деактивировано {deactivate}, по другим причинам {another}"
+    )
 
     return count_notify_users
 

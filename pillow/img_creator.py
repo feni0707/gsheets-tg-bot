@@ -20,7 +20,7 @@ class ImgSchedule:
             self.__font, self.__text_width = font, text_width
         else:
             return await self.__get_properties_text(
-                text, is_bold, draw, is_merged, size_font - 5
+                text, is_bold, draw, is_merged, size_font - 1
             )
 
     async def __get_current_template_img(self):
