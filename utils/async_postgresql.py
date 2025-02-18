@@ -233,7 +233,7 @@ class AsyncPostgreSQL:
             conn: Connection
             async with conn.transaction():
                 res = await conn.fetch(
-                    "UPDATE users SET recieve_notifications=$2 WHERE id=$1",
+                    "UPDATE users SET recieve_notifications=$2 WHERE user_id=$1",
                     user_id,
                     recieve_notifications,
                 )
