@@ -24,6 +24,48 @@ class GoogleTable:
         self.googlesheet_file_key = googlesheet_file_key
         self.school_shift = school_shift
 
+    async def start_polling(self):
+        self.__redis = aioredis.from_url("redis://localhost")
+        await self.__get_table()
+        logging.info(f"start_polling schedule {self.school_shift} shift")
+        while True:
+            logging.info(f"Поллинг расписания {self.school_shift} смены")
+            if not (await self.__is_table_finaly_edited()):
+                await sleep(300)
+                continue
+            from bot import bot
+
+            logging.info(f"Расписание {self.school_shift} смены изменено")
+            img = ImgSchedule(self.school_shift)
+            # last_schedule = await self.__redis.get(
+            #     f"{self.school_shift}_shift_last_schedule"
+            # )
+            data_users = await db.get_notify_true_users_group_by_class(
+                self.school_shift
+            )
+            teachers = await db.get_notify_true_teachers()
+            await img.schedule_to_pictures(self.__school_schedule, self.__merged_cells)
+            count_notify_users = await send_notify_to_users(
+                bot,
+                self.school_shift,
+                self._last_schedule,
+                self.__school_schedule,
+                data_users,
+                teachers,
+            )
+            if count_notify_users:
+                text = f"Уведомления разосланы {count_notify_users} пользователям"
+            else:
+                text = "Уведомления рассылать некому"
+            logging.info(f"{self.school_shift} смена | {text}")
+
+    async def __get_table(self):
+        agcm = gspread_asyncio.AsyncioGspreadClientManager(self.__get_creds)
+        agc = await agcm.authorize()
+        ss = await agc.open_by_key(self.googlesheet_file_key)
+        table = await ss.get_sheet1()
+        self.__table: gspread_asyncio.AsyncioGspreadWorksheet = table
+
     def __get_creds(self):
         creds = Credentials.from_service_account_file(self.credence_service_file)
         scoped = creds.with_scopes(
@@ -35,12 +77,54 @@ class GoogleTable:
         )
         return scoped
 
-    async def __get_table(self):
-        agcm = gspread_asyncio.AsyncioGspreadClientManager(self.__get_creds)
-        agc = await agcm.authorize()
-        ss = await agc.open_by_key(self.googlesheet_file_key)
-        table = await ss.get_sheet1()
-        self.__table: gspread_asyncio.AsyncioGspreadWorksheet = table
+    async def __is_table_finaly_edited(self):
+        if await self.__is_table_update():
+            n = 3
+            while n:
+                await sleep(100)
+                if await self.__is_table_update(in_while=True):
+                    n = 3
+                else:
+                    n -= 1
+            return True
+
+    async def __is_table_update(self, in_while: bool = False):
+        await self.__get_schedule()
+        key = f"{self.school_shift}_shift_last_schedule"
+        last_schedule = await self.__redis.get(key)
+        if not in_while:
+            self._last_schedule = loads(last_schedule) if last_schedule else None
+        if not last_schedule or not (self.__school_schedule == loads(last_schedule)):
+            await self.__redis.set(key, dumps(self.__school_schedule))
+            logging.info(f"Расписание {self.school_shift} смены добавлено в кеш")
+            return True
+        return False
+
+    async def __get_schedule(self):
+        await self.__set_consts()
+        await self.__set_ranges()
+        table_values = await self.__table.get(
+            f"{self.__start}:{self.__end}", major_dimension="columns"
+        )
+        await self.__fill_right_col()
+        await self.__get_list_merjed_cells()
+        await self.__clear_right_col()
+
+        self.__school_schedule = {}
+        self.__merged_cells: Dict[str, List[str]] = {}
+        for index, school_class in enumerate(self.__classes):
+            self.__school_schedule[school_class] = {}
+            for index_day, day in enumerate(SCHOOL_DAYS):
+                start = self.__start_row + index_day * (self.__len_day + 1) - 1
+                end = start + self.__len_day + (day == SCHOOL_DAYS[-1])
+                self.__school_schedule[school_class][day] = table_values[index][
+                    start:end
+                ]
+                self.__merged_cells[day] = self.__list_merjed_cells[start:end]
+                # if day == SCHOOL_DAYS[-1]:
+                #     self.__school_schedule[school_class][day].insert(0, "")
+
+        await self.__rename_high_classes_to_one_class()
 
     async def __set_consts(self):
         self.__col_to_end = 56 if self.school_shift == 1 else 61
@@ -118,90 +202,6 @@ class GoogleTable:
 
         for key in self.__classes[-2:]:
             del self.__school_schedule[key]
-
-    async def __get_schedule(self):
-        await self.__set_consts()
-        await self.__set_ranges()
-        table_values = await self.__table.get(
-            f"{self.__start}:{self.__end}", major_dimension="columns"
-        )
-        await self.__fill_right_col()
-        await self.__get_list_merjed_cells()
-        await self.__clear_right_col()
-
-        self.__school_schedule = {}
-        self.__merged_cells: Dict[str, List[str]] = {}
-        for index, school_class in enumerate(self.__classes):
-            self.__school_schedule[school_class] = {}
-            for index_day, day in enumerate(SCHOOL_DAYS):
-                start = self.__start_row + index_day * (self.__len_day + 1) - 1
-                end = start + self.__len_day + (day == SCHOOL_DAYS[-1])
-                self.__school_schedule[school_class][day] = table_values[index][
-                    start:end
-                ]
-                self.__merged_cells[day] = self.__list_merjed_cells[start:end]
-                # if day == SCHOOL_DAYS[-1]:
-                #     self.__school_schedule[school_class][day].insert(0, "")
-
-        await self.__rename_high_classes_to_one_class()
-
-    async def __is_table_update(self, in_while: bool = False):
-        await self.__get_schedule()
-        key = f"{self.school_shift}_shift_last_schedule"
-        last_schedule = await self.__redis.get(key)
-        if not in_while:
-            self._last_schedule = loads(last_schedule) if last_schedule else None
-        if not last_schedule or not (self.__school_schedule == loads(last_schedule)):
-            await self.__redis.set(key, dumps(self.__school_schedule))
-            logging.info(f"Расписание {self.school_shift} смены добавлено в кеш")
-            return True
-        return False
-
-    async def __is_table_finaly_edited(self):
-        if await self.__is_table_update():
-            n = 3
-            while n:
-                await sleep(100)
-                if await self.__is_table_update(in_while=True):
-                    n = 3
-                else:
-                    n -= 1
-            return True
-
-    async def start_polling(self):
-        self.__redis = aioredis.from_url("redis://localhost")
-        await self.__get_table()
-        logging.info(f"start_polling schedule {self.school_shift} shift")
-        while True:
-            logging.info(f"Поллинг расписания {self.school_shift} смены")
-            if not (await self.__is_table_finaly_edited()):
-                await sleep(300)
-                continue
-            from bot import bot
-
-            logging.info(f"Расписание {self.school_shift} смены изменено")
-            img = ImgSchedule(self.school_shift)
-            # last_schedule = await self.__redis.get(
-            #     f"{self.school_shift}_shift_last_schedule"
-            # )
-            data_users = await db.get_notify_true_users_group_by_class(
-                self.school_shift
-            )
-            teachers = await db.get_notify_true_teachers()
-            await img.schedule_to_pictures(self.__school_schedule, self.__merged_cells)
-            count_notify_users = await send_notify_to_users(
-                bot,
-                self.school_shift,
-                self._last_schedule,
-                self.__school_schedule,
-                data_users,
-                teachers,
-            )
-            if count_notify_users:
-                text = f"Уведомления разосланы {count_notify_users} пользователям"
-            else:
-                text = "Уведомления рассылать некому"
-            logging.info(f"{self.school_shift} смена | {text}")
 
     async def __get_ranges(self, f_c, l_c):
         d = {"fc": "", "lc": ""}
