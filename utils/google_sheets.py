@@ -44,6 +44,8 @@ class GoogleTable:
                 self.school_shift
             )
             teachers = await db.get_notify_true_teachers()
+            for s_class, lessons in self.__school_schedule.items():
+                logging.info(f"{s_class}  {lessons}")
             await img.schedule_to_pictures(self.__school_schedule, self.__merged_cells)
             count_notify_users = await send_notify_to_users(
                 bot,
