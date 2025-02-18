@@ -2,5 +2,6 @@ __pycache__
 venv
 pyrightconfig.json
 pillow/images/schedules
+pillow/test.py
 logs
 *.env
