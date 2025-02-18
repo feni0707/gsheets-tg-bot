@@ -162,9 +162,12 @@ async def schedule(msg: Message, state: FSMContext):
         await msg.answer(msg.text, reply_markup=keyboards.menu)
         await state.set_state(User_States.menu)
         return
+    data = await state.get_data()
     if not await redis.was_there_activity_today(msg.chat.id, schedule=True):
         await db.increment_uniq_schedule_req()
-    data = await state.get_data()
+        notify = data["recieve_notifications"]
+        await db.set_recieve_notifications(msg.chat.id, notify)
+
     if data["person_type"] != "teacher":
         # weekday = datetime.today().weekday()
         index_now_weekday = datetime.today().weekday() + (
@@ -230,6 +233,7 @@ async def settings(msg: Message, state: FSMContext):
                 reply_markup=await get_settings_kb(not notify),
             )
             await state.update_data(recieve_notifications=not notify)
+            await db.set_recieve_notifications(msg.chat.id, not notify)
         else:
             await msg.answer(msg.text, reply_markup=keyboards.menu)
             await state.set_state(User_States.menu)

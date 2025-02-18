@@ -227,3 +227,14 @@ class AsyncPostgreSQL:
             async with conn.transaction():
                 res = await conn.fetch("select user_id from users")
                 return [rec[0] for rec in res]
+
+    async def set_recieve_notifications(self, user_id, recieve_notifications):
+        async with self.pool.acquire() as conn:
+            conn: Connection
+            async with conn.transaction():
+                res = await conn.fetch(
+                    "UPDATE users SET recieve_notifications=$2 WHERE id=$1",
+                    user_id,
+                    recieve_notifications,
+                )
+                return res
