@@ -106,10 +106,10 @@ async def yes_no_notify(msg: Message, state: FSMContext):
     else:
         await not_understend(msg, state)
         return
-    data = await state.get_data()
-    await db.add_user(**get_user_args(msg, data))
 
     await state.update_data(recieve_notifications=ans)
+    data = await state.get_data()
+    await db.add_user(**get_user_args(msg, data))
     await msg.answer(consts.REGISTR_SUCCESSFUL, reply_markup=keyboards.menu)
     await state.set_state(User_States.menu)
 
