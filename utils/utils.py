@@ -42,6 +42,7 @@ async def send_notify_to_users(
 
     b = "Telegram server says - Forbidden: bot was blocked by the user"
     d = "Telegram server says - Forbidden: user is deactivated"
+    nf = "Telegram server says - Bad Request: chat not found"
 
     for school_class, list_user_id in users_by_class.items():
         index_now_day = datetime.today().weekday()
@@ -65,6 +66,9 @@ async def send_notify_to_users(
                 text = "Появилось"
             elif current_schedules["last"] != current_schedules["new"]:
                 text = "Изменилось"
+                logging.info(
+                    f'Старое: {current_schedules["last"]}, новое: {current_schedules["new"]}'
+                )
             else:
                 continue
             day_edited_schedule = (
@@ -86,10 +90,12 @@ async def send_notify_to_users(
                     )
                     count_notify_users += 1
                 except Exception as e:
-                    if e == b:
+                    if str(e) == b:
                         blocks += 1
-                    elif e == d:
+                    elif str(e) == d:
                         deactivate += 1
+                    elif str(e) == nf:
+                        pass
                     else:
                         another += 1
                         logging.error(f"Ошибка отправки уведомления {user_id} {e}")
@@ -111,7 +117,7 @@ async def send_notify_to_users(
                     logging.error(
                         f"Ошибка отправки уведомления учителю {teacher_id} {e}"
                     )
-                    r = e
+                    r = str(e)
 
             if not flag:
                 if r == b:
