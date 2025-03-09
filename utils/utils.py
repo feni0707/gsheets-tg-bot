@@ -117,9 +117,9 @@ async def send_notify_to_users(
                     )
                     flag = True
                 except Exception as e:
-                    logger.error(
-                        f"Ошибка отправки уведомления учителю {teacher_id} {e}"
-                    )
+                    # logger.error(
+                    #     f"Ошибка отправки уведомления учителю {teacher_id} {e}"
+                    # )
                     r = str(e)
 
             if not flag:
