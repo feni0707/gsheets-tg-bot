@@ -20,7 +20,6 @@ class TechnicalWorkMiddleware(BaseMiddleware):
         from handlers.user import redis
 
         if await redis.get_state_tech_work():
-            print("ЖЕСТКИЕ ТЕХРАБОТЫ")
             msg = data["event_from_user"]
             if msg.id in ADMINS_ID:
                 return await handler(event, data)

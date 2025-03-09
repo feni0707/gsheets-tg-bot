@@ -10,7 +10,7 @@ from logging import getLogger
 from data.consts import FIRST_SHIFT_CLASSES, SCHOOL_DAYS, SECOND_SHIFT_CLASSES
 from pillow.img_creator import ImgSchedule
 from utils.utils import send_notify_to_users
-from handlers.user import db
+from handlers.user import db, redis
 
 
 logger = getLogger("tg_bot")
@@ -50,19 +50,20 @@ class GoogleTable:
             for s_class, lessons in self.__school_schedule.items():
                 logger.info(f"{s_class}  {lessons}")
             await img.schedule_to_pictures(self.__school_schedule, self.__merged_cells)
-            count_notify_users = await send_notify_to_users(
-                bot,
-                self.school_shift,
-                self._last_schedule,
-                self.__school_schedule,
-                data_users,
-                teachers,
-            )
-            if count_notify_users:
-                text = f"Уведомления разосланы {count_notify_users} пользователям"
-            else:
-                text = "Уведомления рассылать некому"
-            logger.info(f"{self.school_shift} смена | {text}")
+            if not await redis.get_state_tech_work():
+                count_notify_users = await send_notify_to_users(
+                    bot,
+                    self.school_shift,
+                    self._last_schedule,
+                    self.__school_schedule,
+                    data_users,
+                    teachers,
+                )
+                if count_notify_users:
+                    text = f"Уведомления разосланы {count_notify_users} пользователям"
+                else:
+                    text = "Уведомления рассылать некому"
+                logger.info(f"{self.school_shift} смена | {text}")
 
     async def __get_table(self):
         agcm = gspread_asyncio.AsyncioGspreadClientManager(self.__get_creds)
