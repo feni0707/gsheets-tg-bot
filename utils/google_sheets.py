@@ -4,13 +4,16 @@ from string import ascii_uppercase
 from google.oauth2.service_account import Credentials
 from json import dumps, loads
 from asyncio import sleep
-import logging
 import aioredis
+from logging import getLogger
 
 from data.consts import FIRST_SHIFT_CLASSES, SCHOOL_DAYS, SECOND_SHIFT_CLASSES
 from pillow.img_creator import ImgSchedule
 from utils.utils import send_notify_to_users
 from handlers.user import db
+
+
+logger = getLogger("tg_bot")
 
 
 class GoogleTable:
@@ -27,15 +30,15 @@ class GoogleTable:
     async def start_polling(self):
         self.__redis = aioredis.from_url("redis://localhost")
         await self.__get_table()
-        logging.info(f"start_polling schedule {self.school_shift} shift")
+        logger.info(f"start_polling schedule {self.school_shift} shift")
         while True:
-            logging.info(f"Поллинг расписания {self.school_shift} смены")
+            logger.info(f"Поллинг расписания {self.school_shift} смены")
             if not (await self.__is_table_finaly_edited()):
                 await sleep(300)
                 continue
             from bot import bot
 
-            logging.info(f"Расписание {self.school_shift} смены изменено")
+            logger.info(f"Расписание {self.school_shift} смены изменено")
             img = ImgSchedule(self.school_shift)
             # last_schedule = await self.__redis.get(
             #     f"{self.school_shift}_shift_last_schedule"
@@ -45,7 +48,7 @@ class GoogleTable:
             )
             teachers = await db.get_notify_true_teachers()
             for s_class, lessons in self.__school_schedule.items():
-                logging.info(f"{s_class}  {lessons}")
+                logger.info(f"{s_class}  {lessons}")
             await img.schedule_to_pictures(self.__school_schedule, self.__merged_cells)
             count_notify_users = await send_notify_to_users(
                 bot,
@@ -59,7 +62,7 @@ class GoogleTable:
                 text = f"Уведомления разосланы {count_notify_users} пользователям"
             else:
                 text = "Уведомления рассылать некому"
-            logging.info(f"{self.school_shift} смена | {text}")
+            logger.info(f"{self.school_shift} смена | {text}")
 
     async def __get_table(self):
         agcm = gspread_asyncio.AsyncioGspreadClientManager(self.__get_creds)
@@ -98,7 +101,7 @@ class GoogleTable:
             self._last_schedule = loads(last_schedule) if last_schedule else None
         if not last_schedule or not (self.__school_schedule == loads(last_schedule)):
             await self.__redis.set(key, dumps(self.__school_schedule))
-            logging.info(f"Расписание {self.school_shift} смены добавлено в кеш")
+            logger.info(f"Расписание {self.school_shift} смены добавлено в кеш")
             return True
         return False
 
@@ -152,8 +155,6 @@ class GoogleTable:
             for data in (self.__first_class, self.__last_class)
         ]
         start2, end2 = await self.__get_ranges(self.__first_class, self.__last_class)
-        logging.info(f"{start=} {end=}")
-        logging.info(f"{start2=} {end2=}")
         start, end = start2, end2
         end = f"{end[0]}{int(end[1]) + self.__col_to_end}"
         self.__start, self.__end = start, end

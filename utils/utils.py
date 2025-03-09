@@ -2,6 +2,8 @@ from string import Template
 from typing import Any, Dict, List
 from aiogram import Bot
 from datetime import datetime
+from logging import getLogger
+from logging.handlers import TimedRotatingFileHandler
 
 from aiogram.types import Message
 from data.consts import SCHOOL_DAYS
@@ -9,6 +11,7 @@ from utils.async_redis import AsyncRedis
 import logging
 
 redis = AsyncRedis()
+logger = getLogger("tg_bot")
 
 
 async def get_profile_info(person_type: str):
@@ -55,7 +58,7 @@ async def send_notify_to_users(
                 try:
                     current_schedules[time] = schedule[school_class][day]
                 except:
-                    logging.error(f"{schedule}\n{school_class}\n{day}")
+                    logger.error(f"{schedule}\n{school_class}\n{day}")
                 if school_class.isdigit():
                     current_schedules[time] = [
                         item for lst in current_schedules[time].values() for item in lst
@@ -66,7 +69,7 @@ async def send_notify_to_users(
                 text = "Появилось"
             elif current_schedules["last"] != current_schedules["new"]:
                 text = "Изменилось"
-                logging.info(
+                logger.info(
                     f'Старое: {current_schedules["last"]}, новое: {current_schedules["new"]}'
                 )
             else:
@@ -98,9 +101,9 @@ async def send_notify_to_users(
                         pass
                     else:
                         another += 1
-                        logging.error(f"Ошибка отправки уведомления {user_id} {e}")
+                        logger.error(f"Ошибка отправки уведомления {user_id} {e}")
 
-    logging.info(f"{notifications}")
+    logger.info(f"{notifications}")
 
     if days_notify:
         for teacher_id in teachers:
@@ -114,7 +117,7 @@ async def send_notify_to_users(
                     )
                     flag = True
                 except Exception as e:
-                    logging.error(
+                    logger.error(
                         f"Ошибка отправки уведомления учителю {teacher_id} {e}"
                     )
                     r = str(e)
@@ -126,11 +129,11 @@ async def send_notify_to_users(
                     deactivate += 1
                 else:
                     another += 1
-                    logging.error(f"Ошибка отправки уведомления {teacher_id} {r}")
+                    logger.error(f"Ошибка отправки уведомления {teacher_id} {r}")
                 continue
             count_notify_users += 1
 
-    logging.info(
+    logger.info(
         f"В {shift} смене заблокировано {blocks}, деактивировано {deactivate}, по другим причинам {another}"
     )
 
@@ -150,7 +153,7 @@ def delete_last_day_photos():
             if os.path.isfile(file_path):
                 os.remove(file_path)
         except Exception as e:
-            logging.error(f"Ошибка при удалении файла {file_path}. {e}")
+            logger.error(f"Ошибка при удалении файла {file_path}. {e}")
 
 
 def delete_photo(school_class, day):
@@ -178,3 +181,27 @@ def get_user_args(msg: Message, data: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     return args
+
+
+def setup_logger():
+    logger = logging.getLogger("tg_bot")
+
+    if not logger.handlers:
+        logger.setLevel(logging.DEBUG)
+
+        handler = TimedRotatingFileHandler(
+            "logs/tg_bot.log", when="midnight", interval=1, backupCount=30
+        )
+        handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s - [%(levelname)s] - %(name)s - (%(filename)s).%(funcName)s(%(lineno)d) - %(message)s",
+            )
+        )
+
+        logger.addHandler(handler)
+
+        aiogram_logger = logging.getLogger("aiogram")
+        aiogram_logger.setLevel(logging.INFO)
+        aiogram_logger.addHandler(handler)
+
+    return logger

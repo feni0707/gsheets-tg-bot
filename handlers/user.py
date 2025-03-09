@@ -4,22 +4,34 @@ from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from re import fullmatch
 from datetime import datetime
-import logging
+from logging import getLogger
 import asyncio
 from os.path import isfile as is_file_exists
 
 from keyboards.keyboards import get_settings_kb, keyboards
 from states.user import User_States
 from data import consts
+from data.config import ADMINS_ID
 from utils.utils import get_profile_info, get_user_args
 from utils.async_postgresql import AsyncPostgreSQL
 from utils.async_redis import AsyncRedis
+from filters.admin import IsAdminFilter
 
 router = Router()
 db = AsyncPostgreSQL()
 redis = AsyncRedis()
 loop = asyncio.get_event_loop()
 loop.run_until_complete(db.create_pool())
+logger = getLogger("tg_bot")
+
+
+@router.message(Command("техработы"), IsAdminFilter())
+async def tech_work(msg: Message):
+    state_tech_work = await redis.get_state_tech_work()
+    state = "включены" if not state_tech_work else "выключены"
+    logger.info(f"!! Техработы {state} !!")
+    await redis.set_state_tech_work(not state_tech_work)
+    await msg.answer(f"Техработы {state}")
 
 
 @router.message(CommandStart())
@@ -201,7 +213,7 @@ async def schedule(msg: Message, state: FSMContext):
                 photo_id = msg_sended_photo.photo[-1].file_id
                 await redis.add_id_schedule(key, photo_id)
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"Ошибка отправки расписания info: @{msg.chat.username} {msg.chat.first_name} {school_class}\n{e}"
             )
             await msg.answer("Ошибка")
@@ -264,7 +276,7 @@ async def confimation_reset_settings(msg: Message, state: FSMContext):
 async def not_understend(msg: Message, state: FSMContext):
     state_user = await state.get_state()
     state_user = state_user[12:] if state_user else ""
-    logging.info(
+    logger.info(
         f"Пользователь {msg.chat.full_name} (@{msg.chat.username}, state: {state_user}) написал: {msg.text}"
     )
     arg = {}

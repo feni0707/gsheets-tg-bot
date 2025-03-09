@@ -1,11 +1,14 @@
 import asyncpg
-import logging
+from logging import getLogger
 from asyncpg import Connection
 from asyncpg.pool import Pool
 from datetime import date
 
 from data.consts import PERSON_TYPE_TEXTS, CLASSES_BY_SHIFT
 from data import config
+
+
+logger = getLogger("tg_bot")
 
 
 class AsyncPostgreSQL:
@@ -64,7 +67,7 @@ class AsyncPostgreSQL:
                     recieve_notifications,
                     *variable_args,
                 )
-                logging.info(
+                logger.info(
                     f"{type_notify} {PERSON_TYPE_TEXTS[person_type].lower()} {first_name} {school_class}"
                 )
                 return res

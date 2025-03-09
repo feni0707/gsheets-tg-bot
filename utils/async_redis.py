@@ -37,3 +37,9 @@ class AsyncRedis:
 
     async def del_id_schedule(self, key):
         await self._redis.delete(key)
+
+    async def get_state_tech_work(self):
+        return int(await self._redis.get("state_technical_works"))
+
+    async def set_state_tech_work(self, state):
+        await self._redis.set("state_technical_works", int(state))
