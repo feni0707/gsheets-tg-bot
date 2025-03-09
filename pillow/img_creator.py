@@ -127,7 +127,7 @@ class ImgSchedule:
                 self.__draw.text(
                     (
                         self.__now_pos_x,
-                        self.__now_pos_y + 40,
+                        self.__now_pos_y,
                     ),
                     text_for_cell,
                     font=self.__font,
@@ -139,21 +139,21 @@ class ImgSchedule:
             f"pillow/fonts/times_new_roman{'_bold' if is_bold else ''}.ttf",
             size_font,
         )
-        text_width = draw.textlength(max(text.split("\n"), key=len), font)
-        default_width = 1800 if is_merged else 750
-        if text_width < default_width:
-            self.__font, self.__text_width = font, text_width
+        w, h = font.getbbox(max(text.split("\n"), key=len), language="ru")[-2:]
+        default_width = 1800 if is_merged else 900
+        if w < default_width:
+            self.__font, self.__text_width, self.__text_height = font, w, h
         else:
             return await self.__get_properties_text(
                 text, is_bold, draw, is_merged, size_font - 1
             )
 
     async def __prepare_now_coords(self, index, is_merged):
-        now_pos_y = 146 + index * 153
+        now_pos_y = 159 + 153.5 * index + (140 - self.__text_height) / 2
         if self.__is_high_class and not is_merged:
-            now_pos_x = (self.__img_width - self.__text_width) / 2 + (
-                (-1) ** self.__k
-            ) * ((self.__img_width - 200) // 4)
+            now_pos_x = ((self.__img_width / 2 + 164) - self.__text_width) / 2
+            if not self.__k:
+                now_pos_x += 950
 
         else:
             now_pos_x = (self.__img_width - self.__text_width) / 2
@@ -167,9 +167,9 @@ class ImgSchedule:
                 self.__draw.rectangle(
                     (
                         self.__img_width / 2 - 4.5,
-                        self.__now_pos_y + 4 + index * 1.5,
+                        155 + 153.5 * index,
                         self.__img_width / 2 + 4.5,
-                        self.__now_pos_y + 160,
+                        159 + 153.5 * (index + 1) - 10.5,
                     ),
                     fill="black",
                 )
