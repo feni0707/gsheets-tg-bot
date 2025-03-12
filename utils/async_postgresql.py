@@ -19,6 +19,7 @@ class AsyncPostgreSQL:
             password=config.DB_PASSWORD,
             database=config.DB_DATABASE,
             host="127.0.0.1",
+            port=config.DB_PORT,
         )
         if isinstance(pool, Pool):
             self.pool: Pool = pool
