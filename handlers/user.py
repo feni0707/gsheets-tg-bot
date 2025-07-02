@@ -177,8 +177,6 @@ async def schedule(msg: Message, state: FSMContext):
     data = await state.get_data()
     if not await redis.was_there_activity_today(msg.chat.id, schedule=True):
         await db.increment_uniq_schedule_req()
-        notify = data["recieve_notifications"]
-        await db.set_recieve_notifications(msg.chat.id, notify)
 
     if data["person_type"] != "teacher":
         # weekday = datetime.today().weekday()
