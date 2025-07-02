@@ -69,9 +69,17 @@ async def send_notify_to_users(
                 text = "Появилось"
             elif current_schedules["last"] != current_schedules["new"]:
                 text = "Изменилось"
-                logger.info(
-                    f'Старое: {current_schedules["last"]}, новое: {current_schedules["new"]}'
-                )
+                last = current_schedules["last"]
+                new = current_schedules["new"]
+                if len(new) == len(last):
+                    changed = [
+                        (last[i], new[i]) for i in range(len(new)) if new[i] != last[i]
+                    ]
+                    logger.info(f"Изменения расписания у {school_class}: {changed}")
+                else:
+                    logger.info(
+                        f"Изменения расписания у {school_class}:\nстарое: {last}\nновое:{new}"
+                    )
             else:
                 continue
             day_edited_schedule = (

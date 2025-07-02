@@ -112,6 +112,9 @@ class GoogleTable:
         table_values = await self.__table.get(
             f"{self.__start}:{self.__end}", major_dimension="columns"
         )
+        logger.info(
+            f"{self.school_shift} смена: Получена таблица [0][0] = {table_values[0][0]}"
+        )
         await self.__fill_right_col()
         await self.__get_list_merjed_cells()
         await self.__clear_right_col()
