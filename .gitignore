@@ -5,3 +5,4 @@ pillow/images/schedules
 pillow/test.py
 logs
 *.env
+data/credentials.json
