@@ -139,10 +139,6 @@ async def menu(msg: Message, state: FSMContext):
                 person_type=consts.PERSON_TYPE_TEXTS[data["person_type"]],
                 school_class=data.get("school_class", "")
                 + data.get("letter", "").upper(),
-                # profiles=", ".join(
-                #     consts.DICT_PROFILES[profile]
-                #     for profile in data.get("profiles", [])
-                # ),
                 status_of_notify=(
                     "Включены" if data["recieve_notifications"] else "Отключены"
                 ),
@@ -179,7 +175,6 @@ async def schedule(msg: Message, state: FSMContext):
         await db.increment_uniq_schedule_req()
 
     if data["person_type"] != "teacher":
-        # weekday = datetime.today().weekday()
         index_now_weekday = datetime.today().weekday() + (
             msg.text == consts.TEXT_FOR_KB["schedule"][-1]
         )

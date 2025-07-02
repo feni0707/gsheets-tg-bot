@@ -18,8 +18,6 @@ async def get_profile_info(person_type: str):
     answer = "👤*Тип аккаунта*: $person_type\n🔔*Уведомления*: $status_of_notify"
     if person_type != "teacher":
         answer += "\n🏫*Класс*: $school_class"
-        # if int(school_class) > 9:
-        #     answer += "\n📚*Профильные предметы*: $profiles"
 
     return Template(answer)
 
@@ -125,9 +123,6 @@ async def send_notify_to_users(
                     )
                     flag = True
                 except Exception as e:
-                    # logger.error(
-                    #     f"Ошибка отправки уведомления учителю {teacher_id} {e}"
-                    # )
                     r = str(e)
 
             if not flag:

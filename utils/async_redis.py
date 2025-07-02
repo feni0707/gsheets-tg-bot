@@ -10,9 +10,7 @@ class AsyncRedis:
         self, user_id: int, any: bool = False, schedule: bool = False
     ):
         key = f"{user_id}_{'any' if any else 'schedule'}_activ_today"
-        # now_date = date.today().strftime("%d-%m-%Y")
         current_datetime = datetime.now()
-        current_date = current_datetime.date()
         current_time = current_datetime.time()
         midnight = timedelta(hours=0, minutes=0, seconds=0)
         now_time = timedelta(

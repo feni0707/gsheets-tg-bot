@@ -10,7 +10,6 @@ class ImgSchedule:
         self.__school_shift = school_shift
 
     async def schedule_to_pictures(self, school_schedule, merged_cells):
-        # pprint(school_schedule)
         self.__merged_cells = merged_cells
         for school_class, lessons_of_class_per_day in school_schedule.items():
             for day, data in lessons_of_class_per_day.items():
@@ -49,8 +48,6 @@ class ImgSchedule:
                 font=self.__title_font,
                 fill="#000000",
             )
-            # if not self.__is_time_begin_set:
-            #     await self.__set_time_begin_to_school()
             await self.__for_lesson_in_lessons()
         self.__img.save(f"pillow/images/schedules/{day}/{school_class}.jpg")
 
@@ -73,7 +70,6 @@ class ImgSchedule:
             if days == "будни" and not self.__is_high_class
             else ""
         )
-        # for is_true, condition, is_false in (('будни', self.__day != SCHOOL_DAYS[-1], 'суббота'), (''))
         self.__img = Image.open(
             f"pillow/images/templates/шаблон_{'_'.join([value for value in (days, school_class, shift) if value])}.png"
         )

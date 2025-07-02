@@ -40,9 +40,6 @@ class GoogleTable:
 
             logger.info(f"Расписание {self.school_shift} смены изменено")
             img = ImgSchedule(self.school_shift)
-            # last_schedule = await self.__redis.get(
-            #     f"{self.school_shift}_shift_last_schedule"
-            # )
             data_users = await db.get_notify_true_users_group_by_class(
                 self.school_shift
             )
@@ -130,8 +127,6 @@ class GoogleTable:
                     start:end
                 ]
                 self.__merged_cells[day] = self.__list_merjed_cells[start:end]
-                # if day == SCHOOL_DAYS[-1]:
-                #     self.__school_schedule[school_class][day].insert(0, "")
 
         await self.__rename_high_classes_to_one_class()
 
@@ -175,7 +170,6 @@ class GoogleTable:
         )
 
     async def __clear_right_col(self):
-        # await self.__table.batch_clear([self.__range_rigth_col])
         await self.__table.delete_columns(self.__index_end_col + 2)
 
     async def __get_list_merjed_cells(self):
