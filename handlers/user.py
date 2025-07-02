@@ -179,7 +179,7 @@ async def schedule(msg: Message, state: FSMContext):
             msg.text == consts.TEXT_FOR_KB["schedule"][-1]
         )
         if index_now_weekday == 6:
-            await msg.answer("Уроков нету😃")
+            await msg.answer(consts.NO_LESSONS)
             return
         weekdays = consts.DAYS * 2
         now_weekday = weekdays[index_now_weekday]
@@ -193,7 +193,7 @@ async def schedule(msg: Message, state: FSMContext):
             key = f"{now_weekday}:{school_class.upper()}"
             path = f"pillow/images/schedules/{now_weekday}/{school_class.upper()}.jpg"
             if not is_file_exists(path):
-                await msg.answer("Расписание ещё не известно")
+                await msg.answer(consts.SCHEDULE_NOT_YET_KNOWN)
                 return
             photo = await redis.get_id_schedule(key)
             id_photo_exists = bool(photo)
@@ -212,9 +212,9 @@ async def schedule(msg: Message, state: FSMContext):
             await msg.answer("Ошибка")
     else:
         if msg.text == consts.TEXT_FOR_KB["teacher_schedule"][-1]:
-            text = f"<a href='https://docs.google.com/spreadsheets/d/1ukiRpvVSzrazcaRLrDzFOEGurAMOdj2_hpaOksSAy-k/edit?usp=sharing'>Расписание 1 смены доступно по ссылке</a>"
+            text = consts.SCHEDULE_1_SHIFT
         else:
-            text = f"<a href='https://docs.google.com/spreadsheets/d/1HTUYHHvPxBLZyUbcl2RCLCqn_WXJfCmTL8HaC7AFNQA/edit?usp=sharing'>Расписание 2 смены доступно по ссылке</a>"
+            text = consts.SCHEDULE_2_SHIFT
         await msg.answer(text, parse_mode="HTML")
 
     if not await db.user_exists(msg.chat.id):
@@ -283,7 +283,7 @@ async def not_understend(msg: Message, state: FSMContext):
             recieve_notifications = (await state.get_data())["recieve_notifications"]
             arg["reply_markup"] = await get_settings_kb(recieve_notifications)
 
-    await msg.answer("Я вас не понял", **arg)
+    await msg.answer(consts.NOT_UNDERSTEND_MSG, **arg)
     if state_user in ("start_menu", "yes_no_notify"):
         texts = {
             "start_menu": consts.TEMPLATE_START.substitute(user=msg.chat.full_name),

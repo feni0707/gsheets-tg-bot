@@ -18,6 +18,19 @@ CONFIRMATION_RESET = (
 TEMPLATE_RESET_NOTFY = Template("Уведомления $state_notify")
 CANCEL_RESET = "Хорошо"
 TECHNICAL_WORK = "В данный момент ведуться технические работы, попробуйте позже"
+NO_LESSONS = "Уроков нету😃"
+SCHEDULE_NOT_YET_KNOWN = "Расписание ещё не известно"
+SCHEDULE_1_SHIFT = (
+    f"<a href='https://docs.google.com/spreadsheets/d/1ukiRpvVSz"
+    "razcaRLrDzFOEGurAMOdj2_hpaOksSAy-k/edit?usp=sharing'>"
+    "Расписание 1 смены доступно по ссылке</a>"
+)
+SCHEDULE_2_SHIFT = (
+    f"<a href='https://docs.google.com/spreadsheets/d/1HTUYHHvPx"
+    "BLZyUbcl2RCLCqn_WXJfCmTL8HaC7AFNQA/edit?usp=sharing'>"
+    "Расписание 2 смены доступно по ссылке</a>"
+)
+NOT_UNDERSTEND_MSG = "Я вас не понял"
 START_MENU_TEXT = {
     "student": "Введите ваш класс, а затем букву, например - 7Б",
     "parent": "Введите класс, а затем букву вашего ребёнка, например - 7Б",
